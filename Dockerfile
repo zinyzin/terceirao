@@ -2,8 +2,8 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install OpenSSL and libssl1.1-compat for Prisma
-RUN apk add --no-cache openssl libssl1.1-compat
+# Install OpenSSL and compatibility libraries for Prisma
+RUN apk add --no-cache openssl libretls-compat
 
 COPY backend/package*.json ./
 RUN npm install --only=production --no-package-lock
