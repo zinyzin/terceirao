@@ -3,7 +3,7 @@ FROM node:20-alpine
 WORKDIR /app
 
 COPY backend/package*.json ./
-RUN npm ci --only=production
+RUN npm install --only=production --no-package-lock
 
 COPY backend/prisma ./prisma/
 RUN npx prisma generate
