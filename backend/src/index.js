@@ -5,6 +5,7 @@ const cors = require('cors');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const path = require('path');
+const fs = require('fs');
 
 const { logger } = require('./lib/logger');
 const { errorHandler } = require('./middleware/error');
@@ -40,7 +41,9 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: (origin, cb) => {
-    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
+    if (!origin) return cb(null, true);
+    if (allowedOrigins.includes(origin)) return cb(null, true);
+    if (origin.endsWith('.railway.app')) return cb(null, true);
     cb(new Error('Not allowed by CORS'));
   },
   credentials: true,
@@ -73,9 +76,9 @@ app.use('/api/dashboard', dashboardRoutes);
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok', ts: new Date() }));
 
-// ── Serve React in production ──
-if (process.env.NODE_ENV === 'production') {
-  const frontendDist = path.join(__dirname, '../frontend/dist');
+// ── Serve React (sempre que o dist existir) ──
+const frontendDist = path.join(__dirname, '../frontend/dist');
+if (fs.existsSync(frontendDist)) {
   app.use(express.static(frontendDist));
   app.get('*', (_, res) => res.sendFile(path.join(frontendDist, 'index.html')));
 }
