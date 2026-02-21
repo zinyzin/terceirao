@@ -1,0 +1,194 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  passwordHash String
+  name         String
+  role         Role      @default(ADMIN)
+  isActive     Boolean   @default(true)
+  createdBy    String?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions  Session[]
+  auditLogs AuditLog[]
+}
+
+model Session {
+  id           String   @id @default(uuid())
+  userId       String
+  refreshToken String   @unique
+  ipAddress    String?
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  isRevoked    Boolean  @default(false)
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Student {
+  id          String   @id @default(uuid())
+  name        String
+  photo       String?
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  donations    Donation[]
+  ledgerEntries LedgerEntry[]
+  raffleParticipants RaffleParticipant[]
+  raffleWins   RaffleDraw[]
+}
+
+model Contributor {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  createdAt DateTime @default(now())
+
+  donations Donation[]
+}
+
+model Donation {
+  id            String   @id @default(uuid())
+  amount        Decimal  @db.Decimal(10,2)
+  description   String?
+  studentId     String?
+  contributorId String?
+  createdAt     DateTime @default(now())
+
+  student     Student?     @relation(fields: [studentId], references: [id])
+  contributor Contributor? @relation(fields: [contributorId], references: [id])
+}
+
+model Wallet {
+  id        String   @id @default(uuid())
+  balance   Decimal  @default(0) @db.Decimal(10,2)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  ledgerEntries LedgerEntry[]
+}
+
+model LedgerEntry {
+  id            String      @id @default(uuid())
+  walletId      String
+  studentId     String?
+  type          LedgerType
+  amount        Decimal     @db.Decimal(10,2)
+  description   String
+  referenceId   String?
+  referenceType String?
+  createdAt     DateTime    @default(now())
+
+  wallet  Wallet   @relation(fields: [walletId], references: [id])
+  student Student? @relation(fields: [studentId], references: [id])
+}
+
+model Product {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  price       Decimal  @db.Decimal(10,2)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  sales Sale[]
+}
+
+model Sale {
+  id        String   @id @default(uuid())
+  productId String
+  quantity  Int
+  total     Decimal  @db.Decimal(10,2)
+  studentId String?
+  createdAt DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+}
+
+model Raffle {
+  id          String       @id @default(uuid())
+  title       String
+  description String?
+  prizeImage  String?
+  drawDate    DateTime?
+  status      RaffleStatus @default(OPEN)
+  createdAt   DateTime     @default(now())
+
+  participants RaffleParticipant[]
+  draw         RaffleDraw?
+}
+
+model RaffleParticipant {
+  id        String   @id @default(uuid())
+  raffleId  String
+  studentId String
+  tickets   Int      @default(1)
+  createdAt DateTime @default(now())
+
+  raffle  Raffle  @relation(fields: [raffleId], references: [id])
+  student Student @relation(fields: [studentId], references: [id])
+
+  @@unique([raffleId, studentId])
+}
+
+model RaffleDraw {
+  id        String   @id @default(uuid())
+  raffleId  String   @unique
+  winnerId  String
+  seed      String
+  hash      String
+  drawnAt   DateTime @default(now())
+
+  raffle Raffle  @relation(fields: [raffleId], references: [id])
+  winner Student @relation(fields: [winnerId], references: [id])
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String
+  action    String
+  module    String
+  details   Json?
+  ipAddress String?
+  severity  String   @default("INFO")
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model SiteSettings {
+  id          String   @id @default(uuid())
+  key         String   @unique
+  value       String
+  updatedAt   DateTime @updatedAt
+}
+
+enum Role {
+  SUPERADMIN
+  ADMIN
+}
+
+enum LedgerType {
+  CREDIT
+  DEBIT
+  REVERSAL
+}
+
+enum RaffleStatus {
+  OPEN
+  CLOSED
+  CANCELLED
+}
