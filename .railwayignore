@@ -1,0 +1,5 @@
+# Force Railway to use Dockerfile instead of Railpack
+# Ignore package.json to prevent Railpack detection
+package.json
+package-lock.json
+node_modules
