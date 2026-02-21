@@ -17,6 +17,12 @@ WORKDIR /app
 # Install OpenSSL for Prisma
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
+# Non-secret environment variables
+ENV NODE_ENV=production \
+    PORT=3001 \
+    SUPERADMIN_USERNAME=superadmin \
+    SUPERADMIN_PASSWORD=Pantera@2024!
+
 # Install backend dependencies
 COPY backend/package*.json ./
 RUN npm install --only=production --no-package-lock
@@ -36,4 +42,4 @@ RUN mkdir -p uploads/students uploads/raffles logs
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node src/seed.js && node src/index.js"]
+CMD ["node", "src/index.js"]
