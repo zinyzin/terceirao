@@ -5,9 +5,9 @@ export default {
     extend: {
       colors: {
         g: {
-          50: '#f0fdf4', 100: '#dcfce7', 200: '#bbf7d0',
-          300: '#86efac', 400: '#4ade80', 500: '#22c55e',
-          glow: '#00ff88',
+          50: '#eff6ff', 100: '#dbeafe', 200: '#bfdbfe',
+          300: '#93c5fd', 400: '#60a5fa', 500: '#3b82f6',
+          glow: '#60a5fa',
         }
       },
       fontFamily: {
@@ -25,7 +25,7 @@ export default {
       keyframes: {
         ff: { '0%,100%': {opacity:'.4',transform:'translateY(0)'}, '50%': {opacity:'1',transform:'translateY(-15px)'} },
         breathe: { '0%,100%': {transform:'scale(1)',opacity:'.8'}, '50%': {transform:'scale(1.05)',opacity:'1'} },
-        glow: { '0%,100%': {filter:'drop-shadow(0 0 6px #00ff88)'}, '50%': {filter:'drop-shadow(0 0 18px #00ff88) drop-shadow(0 0 35px #00ff8855)'} },
+        glow: { '0%,100%': {filter:'drop-shadow(0 0 6px #60a5fa)'}, '50%': {filter:'drop-shadow(0 0 18px #60a5fa) drop-shadow(0 0 35px #60a5fa55)'} },
         fadeUp: { from:{opacity:'0',transform:'translateY(20px)'}, to:{opacity:'1',transform:'translateY(0)'} },
         popIn: { from:{opacity:'0',transform:'scale(0.8) translateY(20px)'}, to:{opacity:'1',transform:'scale(1) translateY(0)'} },
       }

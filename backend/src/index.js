@@ -24,6 +24,7 @@ const dashboardRoutes = require('./routes/dashboard');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
+const HOST = '0.0.0.0';
 
 // ── Security ──
 app.set('trust proxy', 1);
@@ -85,6 +86,6 @@ if (fs.existsSync(frontendDist)) {
 
 app.use(errorHandler);
 
-app.listen(PORT, () => logger.info(`🐾 Server running on port ${PORT}`));
+app.listen(PORT, HOST, () => logger.info(`🐾 Server running on ${HOST}:${PORT}`));
 
 module.exports = app;
