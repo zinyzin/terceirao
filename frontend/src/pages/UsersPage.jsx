@@ -58,7 +58,7 @@ export default function UsersPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div className="flex items-center gap-2">
-          <Shield size={20} className="text-green-400"/>
+          <Shield size={20} className="text-blue-300"/>
           <h1 className="stitle">Usuários do Sistema</h1>
         </div>
         <button className="btn-g" onClick={() => { setErr(''); setModal('create') }}>
@@ -66,7 +66,7 @@ export default function UsersPage() {
         </button>
       </div>
 
-      <p className="text-xs text-green-900 font-mono">Você pode definir usuário e senha personalizados para cada administrador.</p>
+      <p className="text-xs text-slate-400 font-mono">Você pode definir usuário e senha personalizados para cada administrador.</p>
 
       <div className="glass overflow-hidden">
         <div className="overflow-x-auto">
@@ -77,14 +77,14 @@ export default function UsersPage() {
                 ? [...Array(3)].map((_,i) => <tr key={i}>{[...Array(6)].map((_,j) => <td key={j}><div className="skel h-4 rounded"/></td>)}</tr>)
                 : users.map(u => (
                   <tr key={u.id}>
-                    <td className="font-medium text-green-100">{u.name}</td>
-                    <td className="font-mono text-xs text-green-500">@{u.username}</td>
+                    <td className="font-medium text-blue-100">{u.name}</td>
+                    <td className="font-mono text-xs text-sky-300">@{u.username}</td>
                     <td><span className={u.role==='SUPERADMIN'?'badge badge-g':'badge badge-b'}>{u.role}</span></td>
                     <td><span className={u.isActive?'badge badge-g':'badge badge-r'}>{u.isActive?'Ativo':'Inativo'}</span></td>
-                    <td className="font-mono text-xs text-green-800">{new Date(u.createdAt).toLocaleDateString('pt-BR')}</td>
+                    <td className="font-mono text-xs text-slate-400">{new Date(u.createdAt).toLocaleDateString('pt-BR')}</td>
                     <td>
                       <div className="flex items-center gap-2">
-                        <button onClick={() => toggle(u.id)} className={`text-xs flex items-center gap-1 transition-colors ${u.isActive?'text-red-500 hover:text-red-300':'text-green-700 hover:text-green-400'}`}>
+                        <button onClick={() => toggle(u.id)} className={`text-xs flex items-center gap-1 transition-colors ${u.isActive?'text-red-500 hover:text-red-300':'text-slate-400 hover:text-blue-300'}`}>
                           {u.isActive ? <ToggleRight size={15}/> : <ToggleLeft size={15}/>}
                         </button>
                         <button onClick={() => { setSelected(u); setErr(''); setModal('pw') }} className="text-yellow-600 hover:text-yellow-400 transition-colors"><Key size={14}/></button>
@@ -97,7 +97,7 @@ export default function UsersPage() {
                             const current = permissions?.[u.id] || []
                             const checked = current.includes(p.key)
                             return (
-                              <label key={p.key} className="flex items-center gap-2 text-xs text-green-800">
+                              <label key={p.key} className="flex items-center gap-2 text-xs text-slate-400">
                                 <input
                                   type="checkbox"
                                   checked={checked}
@@ -133,7 +133,7 @@ export default function UsersPage() {
           <div>
             <label className="lbl">Usuário (login) *</label>
             <input className="inp font-mono" placeholder="Ex: maria_admin" value={form.username} onChange={e=>setForm({...form,username:e.target.value})} required/>
-            <p className="text-xs text-green-900 mt-1">Apenas letras, números e _ (underline)</p>
+            <p className="text-xs text-slate-400 mt-1">Apenas letras, números e _ (underline)</p>
           </div>
           <div>
             <label className="lbl">Senha *</label>

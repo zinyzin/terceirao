@@ -22,4 +22,4 @@ RUN mkdir -p uploads/students uploads/raffles logs
 EXPOSE 3001
 
 # Run migrations + seed + start
-CMD ["sh", "-c", "npx prisma migrate deploy || npx prisma db push && node src/seed.js && node src/index.js"]
+CMD ["sh", "-c", "npx prisma db push && node src/seed.js && node src/index.js"]

@@ -10,10 +10,10 @@ export default function AdminLayout() {
       <ForestBg/>
       <Sidebar/>
       <motion.main
-        className="md:ml-[215px] min-h-screen relative z-10"
+        className="min-h-screen relative z-10 md:ml-[215px]"
         initial={{opacity:0}} animate={{opacity:1}} transition={{duration:.4}}
       >
-        <div className="p-5 md:p-8 pt-16 md:pt-8">
+        <div className="p-4 pt-20 md:p-8 md:pt-8">
           <Outlet/>
         </div>
       </motion.main>

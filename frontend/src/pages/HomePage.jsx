@@ -1,6 +1,6 @@
 // src/pages/HomePage.jsx
 import { motion, AnimatePresence } from 'framer-motion'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { Users, GraduationCap, DollarSign, Ticket, Trophy, LogIn, Eye, EyeOff, X } from 'lucide-react'
 import ForestBg from '../components/ForestBg'
 import { useAuthStore } from '../store/auth'
@@ -17,6 +17,7 @@ const CARDS = [
 
 export default function HomePage() {
   const { isAuth, user, logout, setAuth } = useAuthStore()
+  const navigate = useNavigate()
   const [loginOpen, setLoginOpen] = useState(false)
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -32,6 +33,7 @@ export default function HomePage() {
       setAuth(data.user, data.accessToken)
       setLoginOpen(false)
       setForm({ username: '', password: '' })
+      navigate('/admin/dash')
     } catch (e) {
       setErr(e.response?.data?.error || 'Erro ao entrar')
     } finally {
@@ -57,13 +59,16 @@ export default function HomePage() {
 
           {isAuth && (
             <div className="glass p-4">
-              <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center justify-between gap-3 flex-wrap">
                 <div className="min-w-0">
                   <p className="text-xs text-slate-400">Logado como</p>
                   <p className="text-sm font-semibold text-blue-100 truncate">{user?.name}</p>
                   <p className="text-xs font-mono text-sky-200/70">{user?.role}</p>
                 </div>
-                <button className="btn-danger px-4 justify-center" onClick={logout}>Sair</button>
+                <div className="flex gap-2 w-full sm:w-auto">
+                  <button className="btn-ghost flex-1 sm:flex-none px-4 justify-center" onClick={() => navigate('/admin/dash')}>Abrir painel</button>
+                  <button className="btn-danger flex-1 sm:flex-none px-4 justify-center" onClick={logout}>Sair</button>
+                </div>
               </div>
             </div>
           )}

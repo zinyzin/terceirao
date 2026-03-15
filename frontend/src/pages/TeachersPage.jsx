@@ -49,7 +49,7 @@ export default function TeachersPage() {
     <div className="min-h-screen relative overflow-x-hidden">
       <ForestBg/>
 
-      <main className="relative z-10 p-5 pt-10">
+      <main className="page-shell pt-10">
         <div className="max-w-5xl mx-auto space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <h1 className="stitle">Professores</h1>
@@ -69,15 +69,15 @@ export default function TeachersPage() {
               >
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="font-display font-bold text-green-100 text-sm truncate">{t.name}</p>
-                    <p className="text-xs text-green-800 mt-1">Matéria: <span className="text-green-500">{t.subject}</span></p>
+                    <p className="font-display font-bold text-blue-50 text-sm truncate">{t.name}</p>
+                    <p className="text-xs text-slate-300 mt-1">Matéria: <span className="text-sky-300">{t.subject}</span></p>
                     {t.counselor && <p className="text-xs text-yellow-400 mt-1 font-semibold">Professor Conselheiro</p>}
                   </div>
-                  <div className="w-12 h-12 rounded-xl bg-green-900/50 border border-green-800 flex items-center justify-center text-green-400 font-display font-black">
+                  <div className="w-12 h-12 rounded-xl bg-slate-900/50 border border-blue-300/20 flex items-center justify-center text-blue-300 font-display font-black">
                     {t.name[0]}
                   </div>
                 </div>
-                <p className="text-xs text-green-800 mt-3 line-clamp-3">{t.bio}</p>
+                <p className="text-xs text-slate-300 mt-3 line-clamp-3">{t.bio}</p>
               </motion.div>
             ))}
           </div>
@@ -87,26 +87,26 @@ export default function TeachersPage() {
               <div>
                 <div className="flex justify-center mb-4">
                   {selected.photo
-                    ? <img src={selected.photo} className="w-40 h-40 rounded-2xl object-cover border border-green-500/30"/>
-                    : <div className="w-40 h-40 rounded-2xl bg-green-900/50 flex items-center justify-center font-display text-5xl font-bold text-green-400">{selected.name[0]}</div>
+                    ? <img src={selected.photo} className="w-40 h-40 rounded-2xl object-cover border border-blue-300/30"/>
+                    : <div className="w-40 h-40 rounded-2xl bg-slate-900/50 flex items-center justify-center font-display text-5xl font-bold text-blue-300">{selected.name[0]}</div>
                   }
                 </div>
 
-                <h2 className="font-display text-xl font-bold text-green-100 text-center">{selected.name}</h2>
-                <p className="text-xs text-green-800 text-center mt-2">Matéria: <span className="text-green-500">{selected.subject}</span></p>
+                <h2 className="font-display text-xl font-bold text-blue-50 text-center">{selected.name}</h2>
+                <p className="text-xs text-slate-300 text-center mt-2">Matéria: <span className="text-sky-300">{selected.subject}</span></p>
 
                 {selected.catchphrase && (
-                  <div className="mt-5 p-4 rounded-xl" style={{ background: 'rgba(4,20,8,0.6)', border: '1px solid rgba(0,255,136,0.10)' }}>
-                    <p className="text-xs text-green-800 uppercase tracking-wider mb-2">Bordão</p>
-                    <p className="text-sm text-green-200">“{selected.catchphrase}”</p>
+                  <div className="mt-5 p-4 rounded-xl surface-muted">
+                    <p className="text-xs text-sky-200/70 uppercase tracking-wider mb-2">Bordão</p>
+                    <p className="text-sm text-blue-100">“{selected.catchphrase}”</p>
                   </div>
                 )}
 
-                {selected.bio && <p className="text-green-700 text-sm mt-4 whitespace-pre-line">{selected.bio}</p>}
+                {selected.bio && <p className="text-slate-300 text-sm mt-4 whitespace-pre-line">{selected.bio}</p>}
 
                 {isAllowed && (
-                  <div className="mt-6 p-4 rounded-xl" style={{ background: 'rgba(0,255,136,0.06)', border: '1px solid rgba(0,255,136,0.12)' }}>
-                    <p className="text-xs text-green-800">Edição desta página está mockada no frontend nesta iteração.</p>
+                  <div className="mt-6 p-4 rounded-xl surface-muted">
+                    <p className="text-xs text-slate-400">Edição desta página está mockada no frontend nesta iteração.</p>
                   </div>
                 )}
               </div>

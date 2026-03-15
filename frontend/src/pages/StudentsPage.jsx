@@ -60,8 +60,8 @@ export default function StudentsPage() {
         {isAllowed && <button className="btn-g" onClick={()=>{setEditing(null);setForm({name:'',description:''});setPhoto(null);setModal('form')}}><Plus size={15}/>Novo Aluno</button>}
       </div>
 
-      <div className="relative max-w-xs">
-        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-green-800"/>
+      <div className="relative max-w-xs w-full">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
         <input className="inp pl-9" placeholder="Buscar aluno..." value={search} onChange={e=>setSearch(e.target.value)}/>
       </div>
 
@@ -80,11 +80,11 @@ export default function StudentsPage() {
                       whileHover={{scale:1.02,y:-2}}>
                       <div className="flex flex-col items-center gap-2">
                         {s.photo
-                          ? <img src={s.photo} alt={s.name} className="w-16 h-16 rounded-full object-cover border border-green-800"/>
-                          : <div className="w-16 h-16 rounded-full bg-green-900/50 border border-green-800 flex items-center justify-center font-display text-xl font-bold text-green-400">{s.name[0]}</div>
+                          ? <img src={s.photo} alt={s.name} className="w-16 h-16 rounded-full object-cover border border-blue-300/20"/>
+                          : <div className="w-16 h-16 rounded-full bg-slate-900/50 border border-blue-300/20 flex items-center justify-center font-display text-xl font-bold text-blue-300">{s.name[0]}</div>
                         }
-                        <p className="font-display text-xs font-bold text-green-100 text-center leading-tight">{s.name}</p>
-                        {s.description && <p className="text-xs text-green-800 text-center line-clamp-2">{s.description}</p>}
+                        <p className="font-display text-xs font-bold text-blue-50 text-center leading-tight">{s.name}</p>
+                        {s.description && <p className="text-xs text-slate-300 text-center line-clamp-2">{s.description}</p>}
                       </div>
                     </motion.div>
                   )
@@ -104,13 +104,13 @@ export default function StudentsPage() {
                     <div className="flex flex-col items-center gap-2">
                       {s.photo
                         ? <img src={s.photo} alt={s.name} className="w-16 h-16 rounded-full object-cover border-2" style={{borderColor:engColor(eng)+'60'}}/>
-                        : <div className="w-16 h-16 rounded-full bg-green-900/50 border-2 flex items-center justify-center font-display text-xl font-bold text-green-400" style={{borderColor:engColor(eng)+'40'}}>{s.name[0]}</div>
+                        : <div className="w-16 h-16 rounded-full bg-slate-900/50 border-2 flex items-center justify-center font-display text-xl font-bold text-blue-300" style={{borderColor:engColor(eng)+'40'}}>{s.name[0]}</div>
                       }
-                      <p className="font-display text-xs font-bold text-green-100 text-center leading-tight">{s.name}</p>
+                      <p className="font-display text-xs font-bold text-blue-50 text-center leading-tight">{s.name}</p>
                     </div>
                     <div className="space-y-0.5">
-                      <div className="flex justify-between text-xs"><span className="text-green-800">Contribuído</span><span className="money-pos font-mono">{fmt(s.totalDonated)}</span></div>
-                      <div className="flex justify-between text-xs"><span className="text-green-800">Tickets</span><span className="text-green-500">{s.totalTickets}</span></div>
+                      <div className="flex justify-between text-xs"><span className="text-slate-400">Contribuído</span><span className="money-pos font-mono">{fmt(s.totalDonated)}</span></div>
+                      <div className="flex justify-between text-xs"><span className="text-slate-400">Tickets</span><span className="text-sky-300">{s.totalTickets}</span></div>
                     </div>
                   </motion.div>
                 )
@@ -127,23 +127,23 @@ export default function StudentsPage() {
             <div>
               <div className="flex justify-center mb-4">
                 {selected.photo
-                  ? <img src={selected.photo} className="w-40 h-40 rounded-2xl object-cover border border-green-500/30"/>
-                  : <div className="w-40 h-40 rounded-2xl bg-green-900/50 flex items-center justify-center font-display text-5xl font-bold text-green-400">{selected.name[0]}</div>
+                  ? <img src={selected.photo} className="w-40 h-40 rounded-2xl object-cover border border-blue-300/30"/>
+                  : <div className="w-40 h-40 rounded-2xl bg-slate-900/50 flex items-center justify-center font-display text-5xl font-bold text-blue-300">{selected.name[0]}</div>
                 }
               </div>
-              <h2 className="font-display text-xl font-bold text-green-100 text-center">{selected.name}</h2>
-              {selected.description && <p className="text-green-700 text-sm text-center mt-3 whitespace-pre-line">{selected.description}</p>}
+              <h2 className="font-display text-xl font-bold text-blue-50 text-center">{selected.name}</h2>
+              {selected.description && <p className="text-slate-300 text-sm text-center mt-3 whitespace-pre-line">{selected.description}</p>}
 
               {selected.graduationQuote && (
-                <div className="mt-5 p-4 rounded-xl" style={{background:'rgba(4,20,8,0.6)',border:'1px solid rgba(0,255,136,0.10)'}}>
-                  <p className="text-xs text-green-800 uppercase tracking-wider mb-2">Frase de Formatura</p>
-                  <p className="text-sm text-green-200">“{selected.graduationQuote}”</p>
+                <div className="mt-5 p-4 rounded-xl surface-muted">
+                  <p className="text-xs text-sky-200/70 uppercase tracking-wider mb-2">Frase de Formatura</p>
+                  <p className="text-sm text-blue-100">“{selected.graduationQuote}”</p>
                 </div>
               )}
 
               {(selected.socials?.instagram || selected.socials?.tiktok || selected.socials?.x) && (
                 <div className="mt-4">
-                  <p className="text-xs text-green-800 uppercase tracking-wider mb-2">Redes sociais</p>
+                  <p className="text-xs text-sky-200/70 uppercase tracking-wider mb-2">Redes sociais</p>
                   <div className="flex flex-col gap-2">
                     {selected.socials?.instagram && <a className="btn-ghost justify-center" href={selected.socials.instagram} target="_blank" rel="noreferrer">Instagram</a>}
                     {selected.socials?.tiktok && <a className="btn-ghost justify-center" href={selected.socials.tiktok} target="_blank" rel="noreferrer">TikTok</a>}
@@ -156,16 +156,16 @@ export default function StudentsPage() {
             <div>
               <div className="flex justify-center mb-4">
                 {selected.photo
-                  ? <img src={selected.photo} className="w-28 h-28 rounded-full object-cover border-2 border-green-500/30"/>
-                  : <div className="w-28 h-28 rounded-full bg-green-900/50 flex items-center justify-center font-display text-4xl font-bold text-green-400">{selected.name[0]}</div>
+                  ? <img src={selected.photo} className="w-28 h-28 rounded-full object-cover border-2 border-blue-300/30"/>
+                  : <div className="w-28 h-28 rounded-full bg-slate-900/50 flex items-center justify-center font-display text-4xl font-bold text-blue-300">{selected.name[0]}</div>
                 }
               </div>
-              <h2 className="font-display text-xl font-bold text-green-100 text-center">{selected.name}</h2>
-              {selected.description && <p className="text-green-700 text-sm text-center mt-2">{selected.description}</p>}
-              <div className="grid grid-cols-3 gap-3 mt-5">
+              <h2 className="font-display text-xl font-bold text-blue-50 text-center">{selected.name}</h2>
+              {selected.description && <p className="text-slate-300 text-sm text-center mt-2">{selected.description}</p>}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
                 {[{l:'Ranking',v:`#${selected.rank}`,c:'#ffcc00'},{l:'Contribuído',v:fmt(selected.totalDonated),c:'#00ff88'},{l:'Vitórias',v:selected.wins,c:'#ff9900'}].map(x=>(
-                  <div key={x.l} className="text-center p-3 rounded-xl" style={{background:'rgba(4,20,8,0.6)'}}>
-                    <p className="text-xs text-green-800 mb-1">{x.l}</p>
+                  <div key={x.l} className="text-center p-3 rounded-xl surface-muted">
+                    <p className="text-xs text-slate-400 mb-1">{x.l}</p>
                     <p className="font-mono font-bold text-sm" style={{color:x.c}}>{x.v}</p>
                   </div>
                 ))}

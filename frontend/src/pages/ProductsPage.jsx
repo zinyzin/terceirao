@@ -36,19 +36,19 @@ export default function ProductsPage() {
         <h1 className="stitle">Produtos</h1>
         <button className="btn-g" onClick={()=>setModal('create')}><Plus size={15}/>Novo</button>
       </div>
-      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {products.map((p,i) => (
           <motion.div key={p.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*.07}} className="glass p-5 flex flex-col gap-3">
             <div className="flex justify-between items-start">
               <div>
-                <h3 className="font-display text-sm font-bold text-green-100">{p.name}</h3>
-                {p.description && <p className="text-xs text-green-800">{p.description}</p>}
+                <h3 className="font-display text-sm font-bold text-blue-50">{p.name}</h3>
+                {p.description && <p className="text-xs text-slate-300">{p.description}</p>}
               </div>
               <p className="money-pos font-mono font-bold">{fmt(p.price)}</p>
             </div>
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <div className="text-center p-2 rounded-lg" style={{background:'rgba(4,20,8,0.6)'}}><p className="text-green-800">Vendidos</p><p className="font-mono font-bold text-green-300">{p.totalSold}</p></div>
-              <div className="text-center p-2 rounded-lg" style={{background:'rgba(4,20,8,0.6)'}}><p className="text-green-800">Receita</p><p className="font-mono font-bold money-pos">{fmt(p.totalRevenue)}</p></div>
+              <div className="text-center p-2 rounded-lg surface-muted"><p className="text-slate-400">Vendidos</p><p className="font-mono font-bold text-blue-100">{p.totalSold}</p></div>
+              <div className="text-center p-2 rounded-lg surface-muted"><p className="text-slate-400">Receita</p><p className="font-mono font-bold money-pos">{fmt(p.totalRevenue)}</p></div>
             </div>
             <button className="btn-g w-full justify-center text-xs" onClick={()=>{setActive(p.id);setModal('sell')}}><ShoppingCart size={12}/>Venda</button>
           </motion.div>

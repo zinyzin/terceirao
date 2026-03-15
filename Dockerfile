@@ -42,4 +42,4 @@ RUN mkdir -p uploads/students uploads/raffles logs
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "if [ -d prisma/migrations ] && [ \"$(ls -A prisma/migrations 2>/dev/null | wc -l)\" -gt 0 ]; then npx prisma migrate deploy; else npx prisma db push; fi && node src/seed.js && node src/index.js"]
+CMD ["sh", "-c", "npx prisma db push && node src/seed.js && node src/index.js"]
