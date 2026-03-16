@@ -11,13 +11,14 @@ const createSchema = z.object({
   password: z.string().min(6, 'Senha mínima de 6 caracteres'),
   name: z.string().min(2),
   role: z.enum(['ADMIN', 'SUPERADMIN']).default('ADMIN'),
+  permissions: z.array(z.string()).optional().default([]),
 });
 
 // GET /api/users — list all
 router.get('/', requireSuperadmin, async (req, res, next) => {
   try {
     const users = await prisma.user.findMany({
-      select: { id: true, username: true, name: true, role: true, isActive: true, createdAt: true, createdBy: true },
+      select: { id: true, username: true, name: true, role: true, permissions: true, isActive: true, createdAt: true, createdBy: true },
       orderBy: { createdAt: 'desc' },
     });
     res.json(users);
@@ -40,9 +41,10 @@ router.post('/', requireSuperadmin, async (req, res, next) => {
         passwordHash,
         name: data.name,
         role: data.role,
+        permissions: data.role === 'SUPERADMIN' ? [] : data.permissions,
         createdBy: req.user.id,
       },
-      select: { id: true, username: true, name: true, role: true, isActive: true, createdAt: true },
+      select: { id: true, username: true, name: true, role: true, permissions: true, isActive: true, createdAt: true },
     });
 
     // Audit
@@ -88,6 +90,18 @@ router.patch('/:id/toggle', requireSuperadmin, async (req, res, next) => {
       await prisma.session.updateMany({ where: { userId: req.params.id }, data: { isRevoked: true } });
     }
 
+    res.json(updated);
+  } catch (err) { next(err); }
+});
+
+router.patch('/:id/permissions', requireSuperadmin, async (req, res, next) => {
+  try {
+    const data = z.object({ permissions: z.array(z.string()) }).parse(req.body);
+    const updated = await prisma.user.update({
+      where: { id: req.params.id },
+      data: { permissions: data.permissions },
+      select: { id: true, permissions: true },
+    });
     res.json(updated);
   } catch (err) { next(err); }
 });

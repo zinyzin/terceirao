@@ -44,7 +44,7 @@ router.post('/login', async (req, res, next) => {
 
     res.json({
       accessToken,
-      user: { id: user.id, username: user.username, name: user.name, role: user.role },
+      user: { id: user.id, username: user.username, name: user.name, role: user.role, permissions: user.permissions || [] },
     });
   } catch (err) { next(err); }
 });
@@ -80,7 +80,16 @@ router.post('/refresh', async (req, res, next) => {
     });
 
     const accessToken = generateAccessToken({ userId: session.user.id, role: session.user.role });
-    res.json({ accessToken });
+    res.json({
+      accessToken,
+      user: {
+        id: session.user.id,
+        username: session.user.username,
+        name: session.user.name,
+        role: session.user.role,
+        permissions: session.user.permissions || [],
+      },
+    });
   } catch (err) { next(err); }
 });
 

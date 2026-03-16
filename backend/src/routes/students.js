@@ -15,7 +15,10 @@ const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
 const schema = z.object({
   name: z.string().min(2),
+  shortDescription: z.string().optional(),
+  longDescription: z.string().optional(),
   description: z.string().optional(),
+  photoFromGallery: z.string().optional(),
 });
 
 router.get('/', requireAdmin, async (req, res, next) => {
@@ -60,7 +63,11 @@ router.post('/', requireAdmin, upload.single('photo'), async (req, res, next) =>
   try {
     const data = schema.parse(req.body);
     const student = await prisma.student.create({
-      data: { ...data, photo: req.file ? `/uploads/students/${req.file.filename}` : null },
+      data: {
+        ...data,
+        description: data.longDescription || data.description,
+        photo: req.file ? `/uploads/students/${req.file.filename}` : (data.photoFromGallery || null),
+      },
     });
     res.status(201).json(student);
   } catch (err) { next(err); }
@@ -71,7 +78,12 @@ router.put('/:id', requireAdmin, upload.single('photo'), async (req, res, next) 
     const data = schema.partial().parse(req.body);
     const updated = await prisma.student.update({
       where: { id: req.params.id },
-      data: { ...data, ...(req.file ? { photo: `/uploads/students/${req.file.filename}` } : {}) },
+      data: {
+        ...data,
+        ...(data.longDescription || data.description ? { description: data.longDescription || data.description } : {}),
+        ...(req.file ? { photo: `/uploads/students/${req.file.filename}` } : {}),
+        ...(!req.file && data.photoFromGallery ? { photo: data.photoFromGallery } : {}),
+      },
     });
     res.json(updated);
   } catch (err) { next(err); }

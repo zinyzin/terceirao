@@ -9,7 +9,12 @@ export const useAuthStore = create(
       token: null,
       isAuth: false,
       permissions: {},
-      setAuth: (user, token) => set({ user, token, isAuth: true }),
+      setAuth: (user, token) => set({
+        user,
+        token,
+        isAuth: true,
+        permissions: user?.id ? { ...(get().permissions || {}), [user.id]: user.permissions || [] } : get().permissions,
+      }),
       setToken: (token) => set({ token }),
       logout: () => set({ user: null, token: null, isAuth: false }),
       isSA: () => get().user?.role === 'SUPERADMIN',
@@ -24,7 +29,7 @@ export const useAuthStore = create(
         const u = get().user
         if (!u) return false
         if (u.role === 'SUPERADMIN') return true
-        const list = get().permissions?.[u.id] || []
+        const list = u.permissions || get().permissions?.[u.id] || []
         return list.includes(perm)
       },
     }),
