@@ -2,7 +2,7 @@
 const router = require('express').Router();
 const { z } = require('zod');
 const { prisma } = require('../lib/prisma');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, requireSuperadmin } = require('../middleware/auth');
 const { AppError } = require('../middleware/error');
 
 async function getOrCreateWallet() {
@@ -40,6 +40,7 @@ router.get('/ledger', requireAdmin, async (req, res, next) => {
       }),
       prisma.ledgerEntry.count({ where: { walletId: wallet.id } }),
     ]);
+
     res.json({ entries, total });
   } catch (err) { next(err); }
 });
@@ -95,6 +96,27 @@ router.post('/reverse/:id', requireAdmin, async (req, res, next) => {
       },
     });
     res.json(reversal);
+  } catch (err) { next(err); }
+});
+
+router.patch('/ledger/:id', requireSuperadmin, async (req, res, next) => {
+  try {
+    const data = z.object({
+      amount: z.number().positive().optional(),
+      description: z.string().min(1).optional(),
+    }).parse(req.body);
+    const updated = await prisma.ledgerEntry.update({
+      where: { id: req.params.id },
+      data,
+    });
+    res.json(updated);
+  } catch (err) { next(err); }
+});
+
+router.delete('/ledger/:id', requireSuperadmin, async (req, res, next) => {
+  try {
+    await prisma.ledgerEntry.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Registro removido' });
   } catch (err) { next(err); }
 });
 

@@ -14,6 +14,7 @@ model User {
   passwordHash String
   name         String
   role         Role      @default(ADMIN)
+  permissions  String[]  @default([])
   isActive     Boolean   @default(true)
   createdBy    String?
   createdAt    DateTime  @default(now())
@@ -36,18 +37,42 @@ model Session {
 }
 
 model Student {
-  id          String   @id @default(uuid())
-  name        String
-  photo       String?
-  description String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id               String   @id @default(uuid())
+  name             String
+  photo            String?
+  shortDescription String?
+  longDescription  String?
+  description      String?
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   donations    Donation[]
   ledgerEntries LedgerEntry[]
   raffleParticipants RaffleParticipant[]
   raffleWins   RaffleDraw[]
+}
+
+model Teacher {
+  id               String   @id @default(uuid())
+  name             String
+  subject          String?
+  photo            String?
+  shortDescription String?
+  longDescription  String?
+  catchphrase      String?
+  isCounselor      Boolean  @default(false)
+  isActive         Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+model GalleryItem {
+  id        String   @id @default(uuid())
+  title     String?
+  imageUrl  String
+  category  String?
+  createdAt DateTime @default(now())
 }
 
 model Contributor {

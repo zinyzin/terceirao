@@ -27,6 +27,12 @@ async function authenticate(req, res, next) {
   }
 }
 
+function hasPermission(user, permission) {
+  if (!user) return false;
+  if (user.role === 'SUPERADMIN') return true;
+  return Array.isArray(user.permissions) && user.permissions.includes(permission);
+}
+
 function requireRole(...roles) {
   return (req, res, next) => {
     if (!roles.includes(req.user?.role)) {
@@ -36,7 +42,18 @@ function requireRole(...roles) {
   };
 }
 
+function requirePermission(...permissions) {
+  return (req, res, next) => {
+    if (!req.user) {
+      return res.status(401).json({ error: 'Não autenticado' });
+    }
+    if (req.user.role === 'SUPERADMIN') return next();
+    if (permissions.some(permission => hasPermission(req.user, permission))) return next();
+    return res.status(403).json({ error: 'Sem permissão para acessar este recurso' });
+  };
+}
+
 const requireAdmin = [authenticate, requireRole('SUPERADMIN', 'ADMIN')];
 const requireSuperadmin = [authenticate, requireRole('SUPERADMIN')];
 
-module.exports = { authenticate, requireRole, requireAdmin, requireSuperadmin };
+module.exports = { authenticate, hasPermission, requireRole, requirePermission, requireAdmin, requireSuperadmin };
