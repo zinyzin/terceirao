@@ -21,7 +21,7 @@ const schema = z.object({
   photoFromGallery: z.string().optional(),
 });
 
-router.get('/', requireAdmin, requirePermission('teachers:view', 'teachers:manage'), async (req, res, next) => {
+router.get('/', async (req, res, next) => {
   try {
     const teachers = await prisma.teacher.findMany({
       where: { isActive: true },

@@ -13,7 +13,7 @@ async function getOrCreateWallet() {
 
 async function calcBalance(walletId) {
   const cr = await prisma.ledgerEntry.aggregate({ where: { walletId, type: 'CREDIT' }, _sum: { amount: true } });
-  const db = await prisma.ledgerEntry.aggregate({ where: { walletId, type: { in: ['DEBIT'] } }, _sum: { amount: true } });
+  const db = await prisma.ledgerEntry.aggregate({ where: { walletId, type: { in: ['DEBIT', 'REVERSAL'] } }, _sum: { amount: true } });
   return parseFloat(cr._sum.amount || 0) - parseFloat(db._sum.amount || 0);
 }
 

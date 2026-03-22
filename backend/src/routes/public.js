@@ -115,6 +115,24 @@ router.get('/raffles', async (req, res, next) => {
   }
 });
 
+// GET /api/public/teachers — public teacher listing
+router.get('/teachers', async (req, res, next) => {
+  try {
+    const teachers = await prisma.teacher.findMany({
+      where: { isActive: true },
+      select: { id: true, name: true, subject: true, photo: true, shortDescription: true, longDescription: true, catchphrase: true, isCounselor: true },
+      orderBy: [{ isCounselor: 'desc' }, { name: 'asc' }],
+    });
+    res.json(teachers);
+  } catch (err) {
+    if (isMissingTableError(err)) {
+      res.json([]);
+      return;
+    }
+    next(err);
+  }
+});
+
 // GET /api/public/contributors — gamified ranking by level (no exact totals)
 router.get('/contributors', async (req, res, next) => {
   try {

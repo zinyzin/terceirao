@@ -52,6 +52,13 @@
     filter: brightness(0.45) saturate(0.7) hue-rotate(185deg);
     transition: filter 0.5s;
   }
+  
+  @media (max-width: 768px) {
+    .bg-forest {
+      background-position: 65% center;
+      filter: brightness(0.55) saturate(0.7) hue-rotate(185deg);
+    }
+  }
   .bg-vignette {
     position: fixed;
     inset: 0;

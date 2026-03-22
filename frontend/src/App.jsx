@@ -12,6 +12,7 @@ import RafflesPage from './pages/RafflesPage'
 import UsersPage from './pages/UsersPage'
 import AuditPage from './pages/AuditPage'
 import ProductsPage from './pages/ProductsPage'
+import ToastContainer from './components/Toast'
 
 function Guard({ children, role }) {
   const { isAuth, isAdmin, isSA } = useAuthStore()
@@ -24,6 +25,7 @@ function Guard({ children, role }) {
 export default function App() {
   return (
     <BrowserRouter>
+      <ToastContainer />
       <Routes>
         <Route path="/" element={<HomePage/>}/>
 

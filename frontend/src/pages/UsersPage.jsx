@@ -94,18 +94,19 @@ export default function UsersPage() {
                       {u.role === 'ADMIN' && (
                         <div className="mt-2 grid gap-1">
                           {PERMS.map(p => {
-                            const current = permissions?.[u.id] || []
+                            const current = u.permissions || []
                             const checked = current.includes(p.key)
                             return (
                               <label key={p.key} className="flex items-center gap-2 text-xs text-slate-400">
                                 <input
                                   type="checkbox"
                                   checked={checked}
-                                  onChange={e => {
+                                  onChange={async e => {
                                     const next = e.target.checked
                                       ? [...current, p.key]
                                       : current.filter(x => x !== p.key)
-                                    setUserPermissions(u.id, next)
+                                    await api.patch(`/users/${u.id}/permissions`, { permissions: next })
+                                    load()
                                   }}
                                 />
                                 {p.label}

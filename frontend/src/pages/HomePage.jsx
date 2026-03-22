@@ -44,45 +44,46 @@ export default function HomePage() {
   return (
     <div className="min-h-screen relative overflow-x-hidden">
       <ForestBg/>
+      
+      {!isAuth && (
+        <button 
+          onClick={() => setLoginOpen(true)}
+          className="fixed bottom-6 right-6 z-20 w-12 h-12 rounded-full bg-slate-900/80 backdrop-blur-sm border border-slate-700/50 flex items-center justify-center text-slate-400 hover:text-blue-300 hover:border-blue-400/50 transition-all shadow-lg"
+          title="Login Admin"
+        >
+          <LogIn size={18} />
+        </button>
+      )}
 
       <main className="page-shell pt-10">
         <div className="page-content max-w-5xl">
-          <section className="glass hero-glow text-center px-6 py-8">
-            <p className="text-[11px] uppercase tracking-[0.28em] text-blue-200/70 mb-3">Experiência de formatura</p>
-            <h1 className="font-display font-black text-3xl md:text-5xl text-blue-50 leading-tight">
+          <section className="glass hero-glow text-center px-6 py-10 md:py-12">
+            <p className="text-[11px] uppercase tracking-[0.28em] text-blue-200/70 mb-3">Formatura 2026</p>
+            <h1 className="font-display font-black text-4xl md:text-6xl text-blue-50 leading-tight mb-4">
               Turma <span className="text-sky-300">Pantera</span>
             </h1>
-            <p className="text-slate-300 text-sm md:text-base mt-3 max-w-2xl mx-auto">
-              Um portal de formatura com identidade azul, composição glassmorphism e navegação mais fluida para cada área da turma.
+            <p className="text-slate-300 text-base md:text-lg mt-3 max-w-2xl mx-auto leading-relaxed">
+              Acompanhe nossa jornada rumo à formatura. Explore rifas, contribuições, galeria de fotos e muito mais.
             </p>
           </section>
 
           {isAuth && (
-            <div className="glass p-4">
-              <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="glass p-5">
+              <div className="flex items-center justify-between gap-4 flex-wrap">
                 <div className="min-w-0">
-                  <p className="text-xs text-slate-400">Logado como</p>
-                  <p className="text-sm font-semibold text-blue-100 truncate">{user?.name}</p>
-                  <p className="text-xs font-mono text-sky-200/70">{user?.role}</p>
+                  <p className="text-xs text-slate-400 uppercase tracking-wider">Logado como</p>
+                  <p className="text-base font-semibold text-blue-100 truncate mt-1">{user?.name}</p>
+                  <p className="text-xs font-mono text-sky-200/70 mt-0.5">{user?.role}</p>
                 </div>
                 <div className="flex gap-2 w-full sm:w-auto">
-                  <button className="btn-ghost flex-1 sm:flex-none px-4 justify-center" onClick={() => navigate('/admin/dash')}>Abrir painel</button>
-                  <button className="btn-danger flex-1 sm:flex-none px-4 justify-center" onClick={logout}>Sair</button>
+                  <button className="btn-ghost flex-1 sm:flex-none px-5 justify-center" onClick={() => navigate('/admin/dash')}>Painel Admin</button>
+                  <button className="btn-danger flex-1 sm:flex-none px-5 justify-center" onClick={logout}>Sair</button>
                 </div>
               </div>
             </div>
           )}
 
-          {!isAuth && (
-            <div className="flex justify-center">
-              <button className="btn-ghost justify-center" onClick={() => setLoginOpen(true)}>
-                <LogIn size={15} />
-                Entrar (Admin)
-              </button>
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4 md:grid-cols-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {CARDS.map((c, i) => (
               <motion.div
                 key={c.title}
@@ -92,16 +93,16 @@ export default function HomePage() {
               >
                 <Link
                   to={c.to}
-                  className="glass p-4 h-full block transition-transform overflow-hidden relative"
+                  className="glass p-6 h-full block transition-transform overflow-hidden relative min-h-[120px] flex items-center"
                   style={{ borderColor: `${c.color}33` }}
                 >
-                  <div className="absolute inset-x-0 top-0 h-16 opacity-70" style={{ background:`linear-gradient(180deg, ${c.color}20, transparent)` }}/>
-                  <div className="relative flex items-start justify-between gap-3">
-                    <div>
-                      <p className="font-display font-bold text-blue-50 text-sm">{c.title}</p>
-                      <p className="text-xs text-slate-300 mt-1">{c.desc}</p>
+                  <div className="absolute inset-x-0 top-0 h-20 opacity-70" style={{ background:`linear-gradient(180deg, ${c.color}20, transparent)` }}/>
+                  <div className="relative flex items-center justify-between gap-4 w-full">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-display font-bold text-blue-50 text-base mb-2">{c.title}</p>
+                      <p className="text-xs text-slate-300">{c.desc}</p>
                     </div>
-                    <c.icon size={18} style={{ color: c.color }} />
+                    <c.icon size={24} style={{ color: c.color }} className="flex-shrink-0" />
                   </div>
                 </Link>
               </motion.div>
