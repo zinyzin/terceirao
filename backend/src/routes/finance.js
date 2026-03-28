@@ -28,17 +28,37 @@ router.get('/wallet', requireAdmin, async (req, res, next) => {
 router.get('/ledger', requireAdmin, async (req, res, next) => {
   try {
     const wallet = await getOrCreateWallet();
-    const { page = 1, limit = 30 } = req.query;
+    const { page = 1, limit = 30, startDate, endDate, type } = req.query;
     const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    // Build where clause
+    const where = { walletId: wallet.id };
+    
+    if (type) {
+      where.type = type;
+    }
+    
+    if (startDate || endDate) {
+      where.createdAt = {};
+      if (startDate) {
+        where.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        // Add one day to include the end date fully
+        const end = new Date(endDate);
+        end.setDate(end.getDate() + 1);
+        where.createdAt.lt = end;
+      }
+    }
 
     const [entries, total] = await Promise.all([
       prisma.ledgerEntry.findMany({
-        where: { walletId: wallet.id },
+        where,
         include: { student: { select: { name: true } } },
         orderBy: { createdAt: 'desc' },
         skip, take: parseInt(limit),
       }),
-      prisma.ledgerEntry.count({ where: { walletId: wallet.id } }),
+      prisma.ledgerEntry.count({ where }),
     ]);
 
     res.json({ entries, total });
