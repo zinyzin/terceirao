@@ -25,6 +25,8 @@ api.interceptors.response.use(
   r => r,
   async err => {
     const orig = err.config
+    
+    // Handle token expiration with refresh
     if (err.response?.status === 401 && err.response?.data?.code === 'TOKEN_EXPIRED' && !orig._retry) {
       if (refreshing) {
         return new Promise((res, rej) => queue.push({ resolve: res, reject: rej }))
@@ -45,6 +47,19 @@ api.interceptors.response.use(
         return Promise.reject(e)
       } finally { refreshing = false }
     }
+    
+    // Handle any 401 error (not authenticated, invalid permissions, etc)
+    if (err.response?.status === 401 && !orig._retry) {
+      // Check if user is still logged in
+      const { isAuth } = useAuthStore.getState()
+      if (isAuth) {
+        // Token is invalid or expired, logout and redirect
+        useAuthStore.getState().logout()
+        alert('Sua sessão expirou. Faça login novamente.')
+        window.location.href = '/'
+      }
+    }
+    
     return Promise.reject(err)
   }
 )

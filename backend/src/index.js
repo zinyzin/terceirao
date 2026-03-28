@@ -24,6 +24,9 @@ const auditRoutes = require('./routes/audit');
 const publicRoutes = require('./routes/public');
 const dashboardRoutes = require('./routes/dashboard');
 const settingsRoutes = require('./routes/settings');
+const trashRoutes = require('./routes/trash');
+const reportsRoutes = require('./routes/reports');
+const eventsRoutes = require('./routes/events');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -89,6 +92,9 @@ app.use('/api/audit', auditRoutes);
 app.use('/api/public', publicRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/trash', trashRoutes);
+app.use('/api/reports', reportsRoutes);
+app.use('/api/events', eventsRoutes);
 
 app.get('/api/health', (_, res) => res.json({ status: 'ok', ts: new Date() }));
 

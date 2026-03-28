@@ -1,7 +1,7 @@
 // src/pages/ProductsPage.jsx
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, ShoppingCart, Trash2, Edit2, Package, X } from 'lucide-react'
+import { Plus, ShoppingCart, Trash2, Edit2, Package, X, Search } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 
@@ -17,6 +17,7 @@ export default function ProductsPage() {
   const [editingSale, setEditingSale] = useState(null)
   const [selectedProduct, setSelectedProduct] = useState(null)
   const [sales, setSales] = useState([])
+  const [search, setSearch] = useState('')
 
   const load = async () => {
     const [p,s] = await Promise.all([api.get('/products'), api.get('/students')])
@@ -92,14 +93,21 @@ export default function ProductsPage() {
     }
   }
 
+  const filtered = products.filter(p => p.name.toLowerCase().includes(search.toLowerCase()) ||
+    (p.description && p.description.toLowerCase().includes(search.toLowerCase())))
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="stitle">Produtos</h1>
         <button className="btn-g" onClick={()=>setModal('create')}><Plus size={15}/>Novo</button>
       </div>
+      <div className="relative max-w-xs w-full">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+        <input className="inp pl-9" placeholder="Buscar produto..." value={search} onChange={e=>setSearch(e.target.value)}/>
+      </div>
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {products.map((p,i) => (
+        {filtered.map((p,i) => (
           <motion.div key={p.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*.07}} className="glass p-5 flex flex-col gap-3">
             <div className="flex justify-between items-start">
               <div>

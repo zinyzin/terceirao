@@ -201,6 +201,21 @@ model SiteSettings {
   updatedAt   DateTime @updatedAt
 }
 
+model Event {
+  id          String   @id @default(uuid())
+  title       String
+  description String?
+  startDate   DateTime
+  endDate     DateTime?
+  location    String?
+  type        EventType @default(GENERAL)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  createdBy   String
+  user        User     @relation(fields: [createdBy], references: [id])
+}
+
 enum Role {
   SUPERADMIN
   ADMIN
@@ -216,4 +231,13 @@ enum RaffleStatus {
   OPEN
   CLOSED
   CANCELLED
+}
+
+enum EventType {
+  GENERAL
+  MEETING
+  DEADLINE
+  PAYMENT
+  RAFFLE
+  CELEBRATION
 }

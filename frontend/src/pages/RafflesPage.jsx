@@ -1,7 +1,7 @@
 // src/pages/RafflesPage.jsx
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Ticket, Play, Trophy, Trash2 } from 'lucide-react'
+import { Plus, Ticket, Play, Trophy, Trash2, Search } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import { useAuthStore } from '../store/auth'
@@ -17,6 +17,7 @@ export default function RafflesPage() {
   const [drawing, setDrawing] = useState(false)
   const [form, setForm] = useState({ title:'', description:'', drawDate:'' })
   const [pForm, setPForm] = useState({ studentId:'', tickets:1 })
+  const [search, setSearch] = useState('')
   const { isAuth, can } = useAuthStore()
 
   const isAllowed = isAuth && can('raffles:manage')
@@ -69,6 +70,9 @@ export default function RafflesPage() {
 
   const statusBadge = { OPEN:'badge-g', CLOSED:'badge-r', CANCELLED:'badge-y' }
 
+  const filtered = raffles.filter(r => r.title.toLowerCase().includes(search.toLowerCase()) ||
+    (r.description && r.description.toLowerCase().includes(search.toLowerCase())))
+
   const buyLink = title => {
     const txt = encodeURIComponent(`Quero comprar a rifa: ${title}`)
     return `https://api.whatsapp.com/send?text=${txt}`
@@ -81,8 +85,15 @@ export default function RafflesPage() {
         {isAllowed && <button className="btn-g" onClick={()=>setModal('create')}><Plus size={15}/>Nova Rifa</button>}
       </div>
 
+      {isAllowed && (
+        <div className="relative max-w-xs w-full">
+          <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+          <input className="inp pl-9" placeholder="Buscar rifa..." value={search} onChange={e=>setSearch(e.target.value)}/>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {raffles.map((r,i) => (
+        {filtered.map((r,i) => (
           <motion.div key={r.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*.07}} className="glass p-5 flex flex-col gap-3">
             {r.prizeImage && <img src={r.prizeImage} className="w-full h-28 object-cover rounded-xl border border-blue-300/20" alt="Prêmio"/>}
             <div className="flex justify-between items-start gap-2">

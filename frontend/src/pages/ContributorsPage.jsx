@@ -1,7 +1,7 @@
 // src/pages/ContributorsPage.jsx
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, DollarSign, Trash2, Edit2, X } from 'lucide-react'
+import { Plus, DollarSign, Trash2, Edit2, X, Search } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import axios from 'axios'
@@ -18,6 +18,7 @@ export default function ContributorsPage() {
   const [don, setDon] = useState({amount:'',description:''})
   const [editingDonation, setEditingDonation] = useState(null)
   const [selectedContributor, setSelectedContributor] = useState(null)
+  const [search, setSearch] = useState('')
 
   const isAllowed = isAuth && can('contributors:manage')
 
@@ -94,6 +95,9 @@ export default function ContributorsPage() {
     }
   }
 
+  const filtered = list.filter(c => c.name.toLowerCase().includes(search.toLowerCase()) || 
+    (c.email && c.email.toLowerCase().includes(search.toLowerCase())))
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -103,7 +107,7 @@ export default function ContributorsPage() {
 
       {!isAllowed ? (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {list.map((c,i) => (
+          {filtered.map((c,i) => (
             <motion.div key={c.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*.06}} className="glass p-5 flex flex-col gap-3">
               <div className="flex justify-between items-start gap-3">
                 <div className="min-w-0">
@@ -119,8 +123,12 @@ export default function ContributorsPage() {
         </div>
       ) : (
         <>
+          <div className="relative max-w-xs w-full">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+            <input className="inp pl-9" placeholder="Buscar contribuidor..." value={search} onChange={e=>setSearch(e.target.value)}/>
+          </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {list.map((c,i) => (
+            {filtered.map((c,i) => (
               <motion.div key={c.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*.06}} className="glass p-5 flex flex-col gap-3">
                 <div className="flex justify-between items-start">
                   <div><h3 className="font-display text-sm font-bold text-green-100">{c.name}</h3>
