@@ -54,8 +54,17 @@ app.use(cors({
 }));
 
 // Rate limiting
-app.use('/api/', rateLimit({ windowMs: 15 * 60 * 1000, max: 200 }));
-app.use('/api/auth/login', rateLimit({ windowMs: 15 * 60 * 1000, max: 15 }));
+app.use('/api/', rateLimit({ 
+  windowMs: 15 * 60 * 1000, 
+  max: 100,
+  message: { error: 'Muitas requisições. Tente novamente em alguns minutos.' }
+}));
+app.use('/api/auth/login', rateLimit({ 
+  windowMs: 15 * 60 * 1000, 
+  max: 5,
+  skipSuccessfulRequests: true,
+  message: { error: 'Muitas tentativas de login. Aguarde 15 minutos.' }
+}));
 
 // Body parsing
 app.use(express.json({ limit: '10mb' }));

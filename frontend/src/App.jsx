@@ -1,6 +1,8 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuthStore } from './store/auth'
+import { useThemeStore } from './store/theme'
 import HomePage from './pages/HomePage'
 import AdminLayout from './pages/AdminLayout'
 import DashPage from './pages/DashPage'
@@ -12,6 +14,7 @@ import RafflesPage from './pages/RafflesPage'
 import UsersPage from './pages/UsersPage'
 import AuditPage from './pages/AuditPage'
 import ProductsPage from './pages/ProductsPage'
+import ToastContainer from './components/Toast'
 
 function Guard({ children, role }) {
   const { isAuth, isAdmin, isSA } = useAuthStore()
@@ -21,9 +24,21 @@ function Guard({ children, role }) {
   return children
 }
 
+function AppInitializer() {
+  const { initTheme } = useThemeStore()
+  
+  useEffect(() => {
+    initTheme()
+  }, [initTheme])
+  
+  return null
+}
+
 export default function App() {
   return (
     <BrowserRouter>
+      <AppInitializer />
+      <ToastContainer />
       <Routes>
         <Route path="/" element={<HomePage/>}/>
 

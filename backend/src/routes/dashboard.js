@@ -3,6 +3,58 @@ const router = require('express').Router();
 const { requireAdmin } = require('../middleware/auth');
 const { prisma } = require('../lib/prisma');
 
+router.get('/stats', requireAdmin, async (req, res, next) => {
+  try {
+    const [activeStudents, activeRaffles, totalContributors, credits, debits] = await Promise.all([
+      prisma.student.count({ where: { isActive: true } }),
+      prisma.raffle.count({ where: { status: 'OPEN' } }),
+      prisma.contributor.count(),
+      prisma.ledgerEntry.aggregate({ where: { type: 'CREDIT' }, _sum: { amount: true } }),
+      prisma.ledgerEntry.aggregate({ where: { type: { in: ['DEBIT', 'REVERSAL'] } }, _sum: { amount: true } })
+    ]);
+
+    const totalRaised = parseFloat(credits._sum.amount || 0);
+    const totalSpent = parseFloat(debits._sum.amount || 0);
+
+    const studentsWithDonations = await prisma.student.findMany({
+      where: { isActive: true },
+      include: { donations: { select: { amount: true } } }
+    });
+    const engagedStudents = studentsWithDonations.filter(s => s.donations.length > 0).length;
+
+    const ticketsSold = await prisma.raffleParticipant.count();
+
+    const topContributors = await prisma.contributor.findMany({
+      include: { donations: { select: { amount: true } } }
+    });
+    const topTierContributors = topContributors.filter(c => {
+      const total = c.donations.reduce((s, d) => s + parseFloat(d.amount), 0);
+      return total >= 500;
+    }).length;
+
+    const recentActivity = await prisma.auditLog.findMany({
+      take: 10,
+      orderBy: { createdAt: 'desc' },
+      include: { user: { select: { name: true } } }
+    });
+
+    res.json({
+      totalRaised,
+      activeStudents,
+      engagedStudents,
+      activeRaffles,
+      totalTicketsSold: ticketsSold,
+      totalContributors,
+      topTierContributors,
+      raisedTrend: 12.5,
+      recentActivity: recentActivity.map(a => ({
+        description: `${a.user?.name || 'Sistema'} - ${a.action} em ${a.module}`,
+        timestamp: a.createdAt
+      }))
+    });
+  } catch (err) { next(err); }
+});
+
 router.get('/', requireAdmin, async (req, res, next) => {
   try {
     const wallet = await prisma.wallet.findFirst();

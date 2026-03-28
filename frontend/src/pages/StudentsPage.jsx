@@ -14,6 +14,7 @@ export default function StudentsPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
+  const [expandedId, setExpandedId] = useState(null)
   const [modal, setModal] = useState(null) // 'create'|'edit'|'detail'
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ name:'', description:'' })
@@ -71,20 +72,33 @@ export default function StudentsPage() {
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
             <AnimatePresence>
               {filtered.map((s,i) => {
+                const isExpanded = expandedId === s.id
                 if (!isAllowed) {
                   return (
                     <motion.div key={s.id}
                       initial={{opacity:0,scale:.92}} animate={{opacity:1,scale:1}} transition={{delay:i*.04}}
                       className="glass p-4 cursor-pointer flex flex-col gap-3"
-                      onClick={()=>{setSelected(s);setModal('detail')}}
-                      whileHover={{scale:1.02,y:-2}}>
+                      onClick={()=>setExpandedId(isExpanded ? null : s.id)}
+                      layout
+                      whileHover={{scale:isExpanded?1:1.02,y:isExpanded?0:-2}}>
                       <div className="flex flex-col items-center gap-2">
                         {s.photo
                           ? <img src={s.photo} alt={s.name} className="w-16 h-16 rounded-full object-cover border border-blue-300/20"/>
                           : <div className="w-16 h-16 rounded-full bg-slate-900/50 border border-blue-300/20 flex items-center justify-center font-display text-xl font-bold text-blue-300">{s.name[0]}</div>
                         }
                         <p className="font-display text-xs font-bold text-blue-50 text-center leading-tight">{s.name}</p>
-                        {s.description && <p className="text-xs text-slate-300 text-center line-clamp-2">{s.description}</p>}
+                        {s.description && !isExpanded && <p className="text-xs text-slate-300 text-center line-clamp-2">{s.description}</p>}
+                        {isExpanded && s.description && (
+                          <motion.div
+                            initial={{opacity:0,height:0}}
+                            animate={{opacity:1,height:'auto'}}
+                            exit={{opacity:0,height:0}}
+                            transition={{duration:0.3}}
+                            className="w-full"
+                          >
+                            <p className="text-xs text-slate-300 text-center whitespace-pre-line mt-2">{s.description}</p>
+                          </motion.div>
+                        )}
                       </div>
                     </motion.div>
                   )
@@ -95,8 +109,9 @@ export default function StudentsPage() {
                   <motion.div key={s.id}
                     initial={{opacity:0,scale:.92}} animate={{opacity:1,scale:1}} transition={{delay:i*.04}}
                     className="glass p-4 cursor-pointer flex flex-col gap-3"
-                    onClick={()=>{setSelected(s);setModal('detail')}}
-                    whileHover={{scale:1.03,y:-3}}>
+                    onClick={()=>setExpandedId(isExpanded ? null : s.id)}
+                    layout
+                    whileHover={{scale:isExpanded?1:1.03,y:isExpanded?0:-3}}>
                     <div className="flex justify-between items-start">
                       <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${s.rank===1?'r1':s.rank===2?'r2':s.rank===3?'r3':'rx'}`}>{s.rank}</div>
                       <div className="text-xs font-bold" style={{color:engColor(eng)}}>{eng>50?'🔥':eng>20?'⚡':eng>5?'✨':'💤'}</div>
@@ -107,11 +122,32 @@ export default function StudentsPage() {
                         : <div className="w-16 h-16 rounded-full bg-slate-900/50 border-2 flex items-center justify-center font-display text-xl font-bold text-blue-300" style={{borderColor:engColor(eng)+'40'}}>{s.name[0]}</div>
                       }
                       <p className="font-display text-xs font-bold text-blue-50 text-center leading-tight">{s.name}</p>
+                      {isExpanded && s.description && (
+                        <motion.div
+                          initial={{opacity:0,height:0}}
+                          animate={{opacity:1,height:'auto'}}
+                          exit={{opacity:0,height:0}}
+                          transition={{duration:0.3}}
+                          className="w-full"
+                        >
+                          <p className="text-xs text-slate-300 text-center whitespace-pre-line mt-2 p-3 rounded-lg surface-muted">{s.description}</p>
+                        </motion.div>
+                      )}
                     </div>
                     <div className="space-y-0.5">
                       <div className="flex justify-between text-xs"><span className="text-slate-400">Contribuído</span><span className="money-pos font-mono">{fmt(s.totalDonated)}</span></div>
                       <div className="flex justify-between text-xs"><span className="text-slate-400">Tickets</span><span className="text-sky-300">{s.totalTickets}</span></div>
                     </div>
+                    {isExpanded && isAllowed && (
+                      <motion.button
+                        initial={{opacity:0}}
+                        animate={{opacity:1}}
+                        className="btn-ghost text-xs w-full justify-center mt-2"
+                        onClick={(e)=>{e.stopPropagation();setSelected(s);setModal('detail')}}
+                      >
+                        Ver Detalhes Completos
+                      </motion.button>
+                    )}
                   </motion.div>
                 )
               })}

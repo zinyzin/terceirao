@@ -1,7 +1,7 @@
 // src/pages/FinancePage.jsx
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { TrendingUp, TrendingDown, RefreshCw, Download } from 'lucide-react'
+import { TrendingUp, TrendingDown, RefreshCw, Download, Trash2 } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import axios from 'axios'
@@ -10,7 +10,7 @@ import { useAuthStore } from '../store/auth'
 const fmt = n => `R$ ${Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
 
 export default function FinancePage() {
-  const { isAuth, can } = useAuthStore()
+  const { isAuth, can, user } = useAuthStore()
   const [wallet, setWallet] = useState(null)
   const [ledger, setLedger] = useState({ entries:[], total:0 })
   const [students, setStudents] = useState([])
@@ -20,6 +20,7 @@ export default function FinancePage() {
   const [publicData, setPublicData] = useState(null)
 
   const isAllowed = isAuth && can('finance:detail')
+  const isSuperadmin = user?.role === 'SUPERADMIN'
 
   const load = async () => {
     if (!isAllowed) {
@@ -44,6 +45,11 @@ export default function FinancePage() {
   const reverse = async id => {
     if (!confirm('Confirmar estorno?')) return
     await api.post(`/finance/reverse/${id}`); load()
+  }
+
+  const deleteEntry = async id => {
+    if (!confirm('ATENÇÃO: Deletar esta transação permanentemente?')) return
+    await api.delete(`/finance/ledger/${id}`); load()
   }
 
   return (
@@ -120,9 +126,14 @@ export default function FinancePage() {
                     {e.type==='CREDIT'?'+':'-'}{fmt(e.amount)}
                   </td>
                   <td>
-                    {e.type!=='REVERSAL' && (
-                      <button onClick={()=>reverse(e.id)} className="text-green-800 hover:text-yellow-400 transition-colors"><RefreshCw size={13}/></button>
-                    )}
+                    <div className="flex gap-2">
+                      {e.type!=='REVERSAL' && (
+                        <button onClick={()=>reverse(e.id)} className="text-green-800 hover:text-yellow-400 transition-colors" title="Estornar"><RefreshCw size={13}/></button>
+                      )}
+                      {isSuperadmin && (
+                        <button onClick={()=>deleteEntry(e.id)} className="text-green-800 hover:text-red-400 transition-colors" title="Deletar"><Trash2 size={13}/></button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
