@@ -5,7 +5,7 @@ const multer = require('multer');
 const path = require('path');
 const { z } = require('zod');
 const { prisma } = require('../lib/prisma');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, requirePermission } = require('../middleware/auth');
 const { AppError } = require('../middleware/error');
 
 const storage = multer.diskStorage({
@@ -14,7 +14,7 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
-router.get('/', requireAdmin, async (req, res, next) => {
+router.get('/', requirePermission('raffles:manage'), async (req, res, next) => {
   try {
     const raffles = await prisma.raffle.findMany({
       include: {
@@ -27,7 +27,7 @@ router.get('/', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/', requireAdmin, upload.single('prizeImage'), async (req, res, next) => {
+router.post('/', requirePermission('raffles:manage'), upload.single('prizeImage'), async (req, res, next) => {
   try {
     const data = z.object({
       title: z.string().min(2),
@@ -46,7 +46,7 @@ router.post('/', requireAdmin, upload.single('prizeImage'), async (req, res, nex
   } catch (err) { next(err); }
 });
 
-router.post('/:id/participants', requireAdmin, async (req, res, next) => {
+router.post('/:id/participants', requirePermission('raffles:manage'), async (req, res, next) => {
   try {
     const { studentId, tickets = 1 } = z.object({
       studentId: z.string(),
@@ -66,7 +66,7 @@ router.post('/:id/participants', requireAdmin, async (req, res, next) => {
 });
 
 // POST /api/raffles/:id/draw — Auditable, one-time
-router.post('/:id/draw', requireAdmin, async (req, res, next) => {
+router.post('/:id/draw', requirePermission('raffles:manage'), async (req, res, next) => {
   try {
     const raffle = await prisma.raffle.findUnique({
       where: { id: req.params.id },
@@ -101,10 +101,19 @@ router.post('/:id/draw', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.patch('/:id/cancel', requireAdmin, async (req, res, next) => {
+router.patch('/:id/cancel', requirePermission('raffles:manage'), async (req, res, next) => {
   try {
     await prisma.raffle.update({ where: { id: req.params.id }, data: { status: 'CANCELLED' } });
     res.json({ message: 'Rifa cancelada' });
+  } catch (err) { next(err); }
+});
+
+router.delete('/:id', requirePermission('raffles:manage'), async (req, res, next) => {
+  try {
+    await prisma.raffleParticipant.deleteMany({ where: { raffleId: req.params.id } });
+    await prisma.raffleDraw.deleteMany({ where: { raffleId: req.params.id } });
+    await prisma.raffle.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Rifa excluída' });
   } catch (err) { next(err); }
 });
 

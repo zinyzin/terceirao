@@ -4,7 +4,7 @@ const multer = require('multer');
 const path = require('path');
 const { z } = require('zod');
 const { prisma } = require('../lib/prisma');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, requirePermission } = require('../middleware/auth');
 const { AppError } = require('../middleware/error');
 
 const storage = multer.diskStorage({
@@ -59,7 +59,7 @@ router.get('/:id', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/', requireAdmin, upload.single('photo'), async (req, res, next) => {
+router.post('/', requirePermission('students:manage'), upload.single('photo'), async (req, res, next) => {
   try {
     const data = schema.parse(req.body);
     const student = await prisma.student.create({
@@ -73,7 +73,7 @@ router.post('/', requireAdmin, upload.single('photo'), async (req, res, next) =>
   } catch (err) { next(err); }
 });
 
-router.put('/:id', requireAdmin, upload.single('photo'), async (req, res, next) => {
+router.put('/:id', requirePermission('students:manage'), upload.single('photo'), async (req, res, next) => {
   try {
     const data = schema.partial().parse(req.body);
     const updated = await prisma.student.update({
@@ -89,7 +89,7 @@ router.put('/:id', requireAdmin, upload.single('photo'), async (req, res, next) 
   } catch (err) { next(err); }
 });
 
-router.delete('/:id', requireAdmin, async (req, res, next) => {
+router.delete('/:id', requirePermission('students:manage'), async (req, res, next) => {
   try {
     await prisma.student.update({ where: { id: req.params.id }, data: { isActive: false } });
     res.json({ message: 'Aluno desativado' });

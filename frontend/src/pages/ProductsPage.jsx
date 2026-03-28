@@ -1,7 +1,7 @@
 // src/pages/ProductsPage.jsx
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, ShoppingCart } from 'lucide-react'
+import { Plus, ShoppingCart, Trash2 } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 
@@ -30,6 +30,16 @@ export default function ProductsPage() {
     setModal(null); setSell({quantity:1,studentId:''}); load()
   }
 
+  const handleDelete = async (id) => {
+    if (!confirm('Tem certeza que deseja excluir este produto?')) return
+    try {
+      await api.delete(`/products/${id}`)
+      load()
+    } catch (e) {
+      alert(e.response?.data?.error || 'Erro ao excluir')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -50,7 +60,10 @@ export default function ProductsPage() {
               <div className="text-center p-2 rounded-lg surface-muted"><p className="text-slate-400">Vendidos</p><p className="font-mono font-bold text-blue-100">{p.totalSold}</p></div>
               <div className="text-center p-2 rounded-lg surface-muted"><p className="text-slate-400">Receita</p><p className="font-mono font-bold money-pos">{fmt(p.totalRevenue)}</p></div>
             </div>
-            <button className="btn-g w-full justify-center text-xs" onClick={()=>{setActive(p.id);setModal('sell')}}><ShoppingCart size={12}/>Venda</button>
+            <div className="flex gap-2">
+              <button className="btn-g flex-1 justify-center text-xs" onClick={()=>{setActive(p.id);setModal('sell')}}><ShoppingCart size={12}/>Venda</button>
+              <button className="btn-danger px-3 text-xs" onClick={()=>handleDelete(p.id)} title="Excluir"><Trash2 size={14}/></button>
+            </div>
           </motion.div>
         ))}
       </div>

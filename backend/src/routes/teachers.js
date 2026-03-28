@@ -31,7 +31,7 @@ router.get('/', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/', requireAdmin, requirePermission('teachers:manage'), upload.single('photo'), async (req, res, next) => {
+router.post('/', requirePermission('teachers:edit'), upload.single('photo'), async (req, res, next) => {
   try {
     const data = schema.parse(req.body);
     const teacher = await prisma.teacher.create({
@@ -44,7 +44,7 @@ router.post('/', requireAdmin, requirePermission('teachers:manage'), upload.sing
   } catch (err) { next(err); }
 });
 
-router.put('/:id', requireAdmin, requirePermission('teachers:manage'), upload.single('photo'), async (req, res, next) => {
+router.put('/:id', requirePermission('teachers:edit'), upload.single('photo'), async (req, res, next) => {
   try {
     const data = schema.partial().parse(req.body);
     const updated = await prisma.teacher.update({
@@ -70,7 +70,7 @@ router.patch('/:id/counselor', requireSuperadmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/:id', requireAdmin, requirePermission('teachers:manage'), async (req, res, next) => {
+router.delete('/:id', requirePermission('teachers:edit'), async (req, res, next) => {
   try {
     await prisma.teacher.update({ where: { id: req.params.id }, data: { isActive: false, isCounselor: false } });
     res.json({ message: 'Professor removido' });

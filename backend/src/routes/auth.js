@@ -23,7 +23,7 @@ router.post('/login', async (req, res, next) => {
     const valid = await bcrypt.compare(password, user.passwordHash);
     if (!valid) throw new AppError('Credenciais inválidas', 401);
 
-    const accessToken = generateAccessToken({ userId: user.id, role: user.role });
+    const accessToken = generateAccessToken({ userId: user.id, role: user.role, permissions: user.permissions || [] });
     const refreshToken = generateRefreshToken();
 
     await prisma.session.create({
@@ -79,7 +79,7 @@ router.post('/refresh', async (req, res, next) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    const accessToken = generateAccessToken({ userId: session.user.id, role: session.user.role });
+    const accessToken = generateAccessToken({ userId: session.user.id, role: session.user.role, permissions: session.user.permissions || [] });
     res.json({
       accessToken,
       user: {

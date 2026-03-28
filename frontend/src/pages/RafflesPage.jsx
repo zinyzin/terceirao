@@ -1,7 +1,7 @@
 // src/pages/RafflesPage.jsx
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Ticket, Play, Trophy } from 'lucide-react'
+import { Plus, Ticket, Play, Trophy, Trash2 } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import { useAuthStore } from '../store/auth'
@@ -57,6 +57,16 @@ export default function RafflesPage() {
     finally { setDrawing(false) }
   }
 
+  const handleDelete = async (id) => {
+    if (!confirm('Tem certeza que deseja excluir esta rifa?')) return
+    try {
+      await api.delete(`/raffles/${id}`)
+      load()
+    } catch (e) {
+      alert(e.response?.data?.error || 'Erro ao excluir')
+    }
+  }
+
   const statusBadge = { OPEN:'badge-g', CLOSED:'badge-r', CANCELLED:'badge-y' }
 
   const buyLink = title => {
@@ -107,6 +117,9 @@ export default function RafflesPage() {
                   style={{background:'linear-gradient(135deg,#4d1a00,#803000)',border:'1px solid rgba(255,120,0,0.3)',color:'#ffa060'}}
                   onClick={()=>draw(r.id)} disabled={drawing||!(r.participants?.length)}>
                   <Play size={12}/>Sortear
+                </button>
+                <button className="btn-danger px-3 text-xs" onClick={()=>handleDelete(r.id)} title="Excluir">
+                  <Trash2 size={14}/>
                 </button>
               </div>
             )}

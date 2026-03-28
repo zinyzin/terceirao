@@ -1,7 +1,7 @@
 // src/pages/ContributorsPage.jsx
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, DollarSign } from 'lucide-react'
+import { Plus, DollarSign, Trash2 } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import axios from 'axios'
@@ -44,6 +44,16 @@ export default function ContributorsPage() {
     setModal(null); setDon({amount:'',description:''}); load()
   }
 
+  const handleDelete = async (id) => {
+    if (!confirm('Tem certeza que deseja excluir este contribuidor?')) return
+    try {
+      await api.delete(`/contributors/${id}`)
+      load()
+    } catch (e) {
+      alert(e.response?.data?.error || 'Erro ao excluir')
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -79,7 +89,10 @@ export default function ContributorsPage() {
                   <p className="money-pos font-mono font-bold text-sm">{fmt(c.total)}</p>
                 </div>
                 <p className="text-xs text-green-900">{c.donations?.length||0} doação(ões)</p>
-                <button className="btn-g w-full justify-center text-xs" onClick={()=>{setActive(c.id);setModal('donate')}}><DollarSign size={12}/>Registrar Doação</button>
+                <div className="flex gap-2">
+                  <button className="btn-g flex-1 justify-center text-xs" onClick={()=>{setActive(c.id);setModal('donate')}}><DollarSign size={12}/>Registrar Doação</button>
+                  <button className="btn-danger px-3 text-xs" onClick={()=>handleDelete(c.id)} title="Excluir"><Trash2 size={14}/></button>
+                </div>
               </motion.div>
             ))}
           </div>

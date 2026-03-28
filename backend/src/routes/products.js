@@ -2,10 +2,10 @@
 const router = require('express').Router();
 const { z } = require('zod');
 const { prisma } = require('../lib/prisma');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, requirePermission } = require('../middleware/auth');
 const { AppError } = require('../middleware/error');
 
-router.get('/', requireAdmin, async (req, res, next) => {
+router.get('/', requirePermission('finance:detail'), async (req, res, next) => {
   try {
     const products = await prisma.product.findMany({
       where: { isActive: true },
@@ -19,7 +19,7 @@ router.get('/', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/', requireAdmin, async (req, res, next) => {
+router.post('/', requirePermission('finance:detail'), async (req, res, next) => {
   try {
     const data = z.object({ name: z.string().min(1), description: z.string().optional(), price: z.number().positive() }).parse(req.body);
     const p = await prisma.product.create({ data });
@@ -27,7 +27,7 @@ router.post('/', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/:id/sell', requireAdmin, async (req, res, next) => {
+router.post('/:id/sell', requirePermission('finance:detail'), async (req, res, next) => {
   try {
     const { quantity, studentId } = z.object({ quantity: z.number().int().positive(), studentId: z.string().optional() }).parse(req.body);
     const product = await prisma.product.findUnique({ where: { id: req.params.id } });
@@ -42,6 +42,14 @@ router.post('/:id/sell', requireAdmin, async (req, res, next) => {
       data: { walletId: wallet.id, type: 'CREDIT', amount: total, description: `Venda: ${product.name} x${quantity}`, studentId: studentId || null, referenceType: 'PRODUCT' },
     });
     res.status(201).json({ message: 'Venda registrada', total });
+  } catch (err) { next(err); }
+});
+
+router.delete('/:id', requirePermission('finance:detail'), async (req, res, next) => {
+  try {
+    await prisma.sale.deleteMany({ where: { productId: req.params.id } });
+    await prisma.product.update({ where: { id: req.params.id }, data: { isActive: false } });
+    res.json({ message: 'Produto excluído' });
   } catch (err) { next(err); }
 });
 

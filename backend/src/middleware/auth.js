@@ -14,7 +14,12 @@ async function authenticate(req, res, next) {
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user || !user.isActive) throw new AppError('Usuário não encontrado ou inativo', 401);
 
-    req.user = user;
+    // Merge permissions from token (which has the latest permissions at login time)
+    // with the user object. Token permissions take precedence for performance.
+    req.user = {
+      ...user,
+      permissions: payload.permissions || user.permissions || [],
+    };
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {
@@ -30,7 +35,9 @@ async function authenticate(req, res, next) {
 function hasPermission(user, permission) {
   if (!user) return false;
   if (user.role === 'SUPERADMIN') return true;
-  return Array.isArray(user.permissions) && user.permissions.includes(permission);
+  // Ensure permissions is always an array
+  const perms = Array.isArray(user.permissions) ? user.permissions : [];
+  return perms.includes(permission);
 }
 
 function requireRole(...roles) {
@@ -48,8 +55,18 @@ function requirePermission(...permissions) {
       return res.status(401).json({ error: 'Não autenticado' });
     }
     if (req.user.role === 'SUPERADMIN') return next();
-    if (permissions.some(permission => hasPermission(req.user, permission))) return next();
-    return res.status(403).json({ error: 'Sem permissão para acessar este recurso' });
+    
+    // Debug logging (remove in production)
+    console.log('Checking permissions for user:', req.user.id, 'Role:', req.user.role);
+    console.log('User permissions:', req.user.permissions);
+    console.log('Required permissions:', permissions);
+    
+    const hasRequiredPermission = permissions.some(permission => hasPermission(req.user, permission));
+    
+    console.log('Has required permission:', hasRequiredPermission);
+    
+    if (hasRequiredPermission) return next();
+    return res.status(403).json({ error: 'Sem permissão para acessar este recurso', debug: { userPerms: req.user.permissions, required: permissions } });
   };
 }
 
