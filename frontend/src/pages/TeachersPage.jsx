@@ -162,6 +162,9 @@ export default function TeachersPage() {
                     <Edit2 size={14}/> Editar
                   </button>
                 )}
+                <button className="btn-ghost w-full justify-center mt-2" onClick={()=>setModal(null)}>
+                  Fechar
+                </button>
               </div>
             )}
           </Modal>
