@@ -3,7 +3,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import {
-  LayoutDashboard, Users, UserCheck, DollarSign,
+  LayoutDashboard, Users, GraduationCap, UserCheck, DollarSign,
   Ticket, Package, Shield, ClipboardList, LogOut, Menu, X, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import Panther from './Panther'
@@ -14,6 +14,7 @@ import api from '../lib/api'
 const NAV = [
   { to:'/admin/dash', icon:LayoutDashboard, label:'Dashboard', role:'admin' },
   { to:'/admin/alunos', icon:Users, label:'Alunos', role:'admin' },
+  { to:'/admin/professores', icon:GraduationCap, label:'Professores', role:'admin' },
   { to:'/admin/contribuidores', icon:UserCheck, label:'Contribuidores', role:'admin' },
   { to:'/admin/financeiro', icon:DollarSign, label:'Financeiro', role:'admin' },
   { to:'/admin/produtos', icon:Package, label:'Produtos', role:'admin' },

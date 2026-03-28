@@ -83,26 +83,27 @@ export default function HomePage() {
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {CARDS.map((c, i) => (
               <motion.div
                 key={c.title}
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.06 }}
+                className="aspect-square"
               >
                 <Link
                   to={c.to}
-                  className="glass p-6 h-full block transition-transform overflow-hidden relative min-h-[120px] flex items-center"
+                  className="glass p-4 h-full w-full block transition-transform overflow-hidden relative flex flex-col items-center justify-center text-center"
                   style={{ borderColor: `${c.color}33` }}
                 >
-                  <div className="absolute inset-x-0 top-0 h-20 opacity-70" style={{ background:`linear-gradient(180deg, ${c.color}20, transparent)` }}/>
-                  <div className="relative flex items-center justify-between gap-4 w-full">
-                    <div className="flex-1 min-w-0">
-                      <p className="font-display font-bold text-blue-50 text-base mb-2">{c.title}</p>
-                      <p className="text-xs text-slate-300">{c.desc}</p>
+                  <div className="absolute inset-0 opacity-70" style={{ background:`linear-gradient(180deg, ${c.color}20, transparent)` }}/>
+                  <div className="relative flex flex-col items-center gap-3">
+                    <c.icon size={32} style={{ color: c.color }} className="flex-shrink-0" />
+                    <div>
+                      <p className="font-display font-bold text-blue-50 text-sm mb-1">{c.title}</p>
+                      <p className="text-xs text-slate-300 leading-tight">{c.desc}</p>
                     </div>
-                    <c.icon size={24} style={{ color: c.color }} className="flex-shrink-0" />
                   </div>
                 </Link>
               </motion.div>

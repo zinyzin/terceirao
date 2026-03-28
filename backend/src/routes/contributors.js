@@ -40,4 +40,12 @@ router.post('/:id/donate', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+router.delete('/:id', requireAdmin, async (req, res, next) => {
+  try {
+    await prisma.donation.deleteMany({ where: { contributorId: req.params.id } });
+    await prisma.contributor.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Contribuidor excluído' });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

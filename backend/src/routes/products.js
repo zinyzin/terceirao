@@ -45,4 +45,12 @@ router.post('/:id/sell', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+router.delete('/:id', requireAdmin, async (req, res, next) => {
+  try {
+    await prisma.sale.deleteMany({ where: { productId: req.params.id } });
+    await prisma.product.update({ where: { id: req.params.id }, data: { isActive: false } });
+    res.json({ message: 'Produto excluído' });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

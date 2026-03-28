@@ -108,4 +108,13 @@ router.patch('/:id/cancel', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
+router.delete('/:id', requireAdmin, async (req, res, next) => {
+  try {
+    await prisma.raffleParticipant.deleteMany({ where: { raffleId: req.params.id } });
+    await prisma.raffleDraw.deleteMany({ where: { raffleId: req.params.id } });
+    await prisma.raffle.delete({ where: { id: req.params.id } });
+    res.json({ message: 'Rifa excluída' });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

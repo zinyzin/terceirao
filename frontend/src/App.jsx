@@ -57,6 +57,7 @@ export default function App() {
           <Route index element={<Navigate to="dash" replace/>}/>
           <Route path="dash" element={<DashPage/>}/>
           <Route path="alunos" element={<StudentsPage/>}/>
+          <Route path="professores" element={<TeachersPage/>}/>
           <Route path="contribuidores" element={<ContributorsPage/>}/>
           <Route path="financeiro" element={<FinancePage/>}/>
           <Route path="produtos" element={<ProductsPage/>}/>
