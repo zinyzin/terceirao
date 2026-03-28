@@ -1,7 +1,7 @@
 // src/pages/UsersPage.jsx
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, ToggleLeft, ToggleRight, Key, Trash2, Shield } from 'lucide-react'
+import { Plus, ToggleLeft, ToggleRight, Key, Trash2, Shield, Search } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import { useAuthStore } from '../store/auth'
@@ -17,6 +17,7 @@ export default function UsersPage() {
 
   const [form, setForm] = useState({ username:'', password:'', name:'', role:'ADMIN' })
   const [pwForm, setPwForm] = useState({ password:'' })
+  const [search, setSearch] = useState('')
 
   const load = () => api.get('/users').then(r => setUsers(r.data)).finally(() => setLoading(false))
   useEffect(() => { load() }, [])
@@ -54,6 +55,9 @@ export default function UsersPage() {
     { key: 'students:manage', label: 'Alunos (gerenciar)' },
   ]
 
+  const filtered = users.filter(u => u.name.toLowerCase().includes(search.toLowerCase()) ||
+    u.username.toLowerCase().includes(search.toLowerCase()))
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -68,6 +72,11 @@ export default function UsersPage() {
 
       <p className="text-xs text-slate-400 font-mono">Você pode definir usuário e senha personalizados para cada administrador.</p>
 
+      <div className="relative max-w-xs w-full">
+        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"/>
+        <input className="inp pl-9" placeholder="Buscar usuário..." value={search} onChange={e=>setSearch(e.target.value)}/>
+      </div>
+
       <div className="glass overflow-hidden">
         <div className="overflow-x-auto">
           <table className="tbl">
@@ -75,7 +84,7 @@ export default function UsersPage() {
             <tbody>
               {loading
                 ? [...Array(3)].map((_,i) => <tr key={i}>{[...Array(6)].map((_,j) => <td key={j}><div className="skel h-4 rounded"/></td>)}</tr>)
-                : users.map(u => (
+                : filtered.map(u => (
                   <tr key={u.id}>
                     <td className="font-medium text-blue-100">{u.name}</td>
                     <td className="font-mono text-xs text-sky-300">@{u.username}</td>
