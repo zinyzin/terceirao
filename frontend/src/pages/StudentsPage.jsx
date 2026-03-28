@@ -43,13 +43,18 @@ export default function StudentsPage() {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    const fd = new FormData()
-    fd.append('name', form.name)
-    fd.append('description', form.description)
-    if (photo) fd.append('photo', photo)
-    if (editing) await api.put(`/students/${editing.id}`, fd, { headers:{'Content-Type':'multipart/form-data'} })
-    else await api.post('/students', fd, { headers:{'Content-Type':'multipart/form-data'} })
-    setModal(null); setEditing(null); setForm({name:'',description:''}); setPhoto(null); load()
+    try {
+      const fd = new FormData()
+      fd.append('name', form.name)
+      fd.append('description', form.description)
+      if (photo) fd.append('photo', photo)
+      if (editing) await api.put(`/students/${editing.id}`, fd, { headers:{'Content-Type':'multipart/form-data'} })
+      else await api.post('/students', fd, { headers:{'Content-Type':'multipart/form-data'} })
+      setModal(null); setEditing(null); setForm({name:'',description:''}); setPhoto(null); load()
+    } catch (e) {
+      console.error('Erro ao salvar:', e)
+      alert(e.response?.data?.error || e.message || 'Erro ao salvar aluno')
+    }
   }
 
   const handleDelete = async (id) => {

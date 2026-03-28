@@ -43,16 +43,21 @@ export default function TeachersPage() {
 
   const handleSubmit = async e => {
     e.preventDefault()
-    const fd = new FormData()
-    fd.append('name', form.name)
-    fd.append('subject', form.subject)
-    fd.append('shortDescription', form.shortDescription)
-    fd.append('longDescription', form.longDescription)
-    fd.append('catchphrase', form.catchphrase)
-    if (photo) fd.append('photo', photo)
-    if (editing) await api.put(`/teachers/${editing.id}`, fd, { headers:{'Content-Type':'multipart/form-data'} })
-    else await api.post('/teachers', fd, { headers:{'Content-Type':'multipart/form-data'} })
-    setModal(null); setEditing(null); setForm({name:'',subject:'',shortDescription:'',longDescription:'',catchphrase:''}); setPhoto(null); load()
+    try {
+      const fd = new FormData()
+      fd.append('name', form.name)
+      fd.append('subject', form.subject)
+      fd.append('shortDescription', form.shortDescription)
+      fd.append('longDescription', form.longDescription)
+      fd.append('catchphrase', form.catchphrase)
+      if (photo) fd.append('photo', photo)
+      if (editing) await api.put(`/teachers/${editing.id}`, fd, { headers:{'Content-Type':'multipart/form-data'} })
+      else await api.post('/teachers', fd, { headers:{'Content-Type':'multipart/form-data'} })
+      setModal(null); setEditing(null); setForm({name:'',subject:'',shortDescription:'',longDescription:'',catchphrase:''}); setPhoto(null); load()
+    } catch (e) {
+      console.error('Erro ao salvar:', e)
+      alert(e.response?.data?.error || e.message || 'Erro ao salvar professor')
+    }
   }
 
   const handleDelete = async (id) => {

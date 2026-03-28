@@ -152,6 +152,41 @@ router.get('/finance', async (req, res, next) => {
 
 });
 
+// GET /api/public/ledger — public ledger view (read-only)
+router.get('/ledger', async (req, res, next) => {
+  try {
+    const wallet = await prisma.wallet.findFirst();
+    if (!wallet) {
+      return res.json({ entries: [], total: 0, balance: 0 });
+    }
+
+    const { page = 1, limit = 30 } = req.query;
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const [entries, total, credits, debits] = await Promise.all([
+      prisma.ledgerEntry.findMany({
+        where: { walletId: wallet.id },
+        include: { student: { select: { name: true } } },
+        orderBy: { createdAt: 'desc' },
+        skip, take: parseInt(limit),
+      }),
+      prisma.ledgerEntry.count({ where: { walletId: wallet.id } }),
+      prisma.ledgerEntry.aggregate({ where: { walletId: wallet.id, type: 'CREDIT' }, _sum: { amount: true } }),
+      prisma.ledgerEntry.aggregate({ where: { walletId: wallet.id, type: { in: ['DEBIT', 'REVERSAL'] } }, _sum: { amount: true } }),
+    ]);
+
+    const balance = parseFloat(credits._sum.amount || 0) - parseFloat(debits._sum.amount || 0);
+
+    res.json({ entries, total, balance });
+  } catch (err) {
+    if (isMissingTableError(err)) {
+      res.json({ entries: [], total: 0, balance: 0 });
+      return;
+    }
+    next(err);
+  }
+});
+
 
 
 // GET /api/public/students — public student listing (no financial data)
