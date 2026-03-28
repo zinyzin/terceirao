@@ -17,6 +17,7 @@ import ProductsPage from './pages/ProductsPage'
 import SettingsPage from './pages/SettingsPage'
 import TrashPage from './pages/TrashPage'
 import ReportsPage from './pages/ReportsPage'
+import EventsPage from './pages/EventsPage'
 import ToastContainer from './components/Toast'
 
 function Guard({ children, role }) {
@@ -68,6 +69,7 @@ export default function App() {
           <Route path="settings" element={<Guard role="superadmin"><SettingsPage/></Guard>}/>
           <Route path="trash" element={<Guard role="superadmin"><TrashPage/></Guard>}/>
           <Route path="reports" element={<Guard role="admin"><ReportsPage/></Guard>}/>
+          <Route path="events" element={<Guard role="admin"><EventsPage/></Guard>}/>
           <Route path="users" element={<Guard role="superadmin"><UsersPage/></Guard>}/>
           <Route path="audit" element={<Guard role="superadmin"><AuditPage/></Guard>}/>
         </Route>
