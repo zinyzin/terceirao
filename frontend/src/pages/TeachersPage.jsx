@@ -10,7 +10,7 @@ import axios from 'axios'
 
 export default function TeachersPage() {
   const { isAuth, can } = useAuthStore()
-  const isAllowed = isAuth && can('teachers:manage')
+  const isAllowed = isAuth && can('teachers:edit')
 
   const [teachers, setTeachers] = useState([])
   const [loading, setLoading] = useState(true)
