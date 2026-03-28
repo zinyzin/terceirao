@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import {
   LayoutDashboard, Users, GraduationCap, UserCheck, DollarSign,
-  Ticket, Package, Shield, ClipboardList, Settings, Trash2, LogOut, Menu, X, ChevronLeft, ChevronRight
+  Ticket, Package, Shield, ClipboardList, Settings, Trash2, FileText, LogOut, Menu, X, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import Panther from './Panther'
 import ThemeToggle from './ThemeToggle'
@@ -19,6 +19,7 @@ const NAV = [
   { to:'/admin/financeiro', icon:DollarSign, label:'Financeiro', role:'admin' },
   { to:'/admin/produtos', icon:Package, label:'Produtos', role:'admin' },
   { to:'/admin/rifas', icon:Ticket, label:'Rifas', role:'admin' },
+  { to:'/admin/reports', icon:FileText, label:'Relatórios', role:'admin' },
   { to:'/admin/settings', icon:Settings, label:'Configurações', role:'superadmin' },
   { to:'/admin/trash', icon:Trash2, label:'Lixeira', role:'superadmin' },
   { to:'/admin/users', icon:Shield, label:'Usuários', role:'superadmin' },
