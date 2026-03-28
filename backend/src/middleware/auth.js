@@ -14,7 +14,12 @@ async function authenticate(req, res, next) {
     const user = await prisma.user.findUnique({ where: { id: payload.userId } });
     if (!user || !user.isActive) throw new AppError('Usuário não encontrado ou inativo', 401);
 
-    req.user = user;
+    // Merge permissions from token (which has the latest permissions at login time)
+    // with the user object. Token permissions take precedence for performance.
+    req.user = {
+      ...user,
+      permissions: payload.permissions || user.permissions || [],
+    };
     next();
   } catch (err) {
     if (err.name === 'TokenExpiredError') {

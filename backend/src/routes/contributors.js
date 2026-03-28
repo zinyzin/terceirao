@@ -2,10 +2,10 @@
 const router = require('express').Router();
 const { z } = require('zod');
 const { prisma } = require('../lib/prisma');
-const { requireAdmin } = require('../middleware/auth');
+const { requireAdmin, requirePermission } = require('../middleware/auth');
 const { AppError } = require('../middleware/error');
 
-router.get('/', requireAdmin, async (req, res, next) => {
+router.get('/', requirePermission('contributors:manage'), async (req, res, next) => {
   try {
     const list = await prisma.contributor.findMany({
       include: { donations: { select: { amount: true, createdAt: true } } },
@@ -15,7 +15,7 @@ router.get('/', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/', requireAdmin, async (req, res, next) => {
+router.post('/', requirePermission('contributors:manage'), async (req, res, next) => {
   try {
     const data = z.object({ name: z.string().min(2), email: z.string().email().optional(), phone: z.string().optional() }).parse(req.body);
     const c = await prisma.contributor.create({ data });
@@ -23,7 +23,7 @@ router.post('/', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/:id/donate', requireAdmin, async (req, res, next) => {
+router.post('/:id/donate', requirePermission('contributors:manage'), async (req, res, next) => {
   try {
     const { amount, description } = z.object({ amount: z.number().positive(), description: z.string().optional() }).parse(req.body);
     const c = await prisma.contributor.findUnique({ where: { id: req.params.id } });
@@ -40,7 +40,7 @@ router.post('/:id/donate', requireAdmin, async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.delete('/:id', requireAdmin, async (req, res, next) => {
+router.delete('/:id', requirePermission('contributors:manage'), async (req, res, next) => {
   try {
     await prisma.donation.deleteMany({ where: { contributorId: req.params.id } });
     await prisma.contributor.delete({ where: { id: req.params.id } });
