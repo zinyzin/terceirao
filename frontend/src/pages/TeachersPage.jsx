@@ -1,7 +1,7 @@
 // src/pages/TeachersPage.jsx
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Edit2, Search } from 'lucide-react'
+import { Plus, Edit2, Search, Trash2 } from 'lucide-react'
 import Modal from '../components/Modal'
 import ForestBg from '../components/ForestBg'
 import { useAuthStore } from '../store/auth'
@@ -53,6 +53,16 @@ export default function TeachersPage() {
     if (editing) await api.put(`/teachers/${editing.id}`, fd, { headers:{'Content-Type':'multipart/form-data'} })
     else await api.post('/teachers', fd, { headers:{'Content-Type':'multipart/form-data'} })
     setModal(null); setEditing(null); setForm({name:'',subject:'',shortDescription:'',longDescription:'',catchphrase:''}); setPhoto(null); load()
+  }
+
+  const handleDelete = async (id) => {
+    if (!confirm('Tem certeza que deseja excluir este professor?')) return
+    try {
+      await api.delete(`/teachers/${id}`)
+      load()
+    } catch (e) {
+      alert(e.response?.data?.error || 'Erro ao excluir')
+    }
   }
 
   return (
@@ -160,6 +170,11 @@ export default function TeachersPage() {
                 {isAllowed && (
                   <button className="btn-g w-full justify-center mt-5" onClick={()=>{setEditing(selected);setForm({name:selected.name,subject:selected.subject||'',shortDescription:selected.shortDescription||'',longDescription:selected.longDescription||'',catchphrase:selected.catchphrase||''});setModal('form')}}>
                     <Edit2 size={14}/> Editar
+                  </button>
+                )}
+                {isAllowed && (
+                  <button className="btn-danger w-full justify-center mt-2" onClick={()=>{handleDelete(selected.id);setModal(null)}}>
+                    <Trash2 size={14}/> Excluir
                   </button>
                 )}
                 <button className="btn-ghost w-full justify-center mt-2" onClick={()=>setModal(null)}>

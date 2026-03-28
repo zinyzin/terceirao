@@ -1,7 +1,7 @@
 // src/pages/StudentsPage.jsx
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, Edit2 } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2 } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import { useAuthStore } from '../store/auth'
@@ -50,6 +50,16 @@ export default function StudentsPage() {
     if (editing) await api.put(`/students/${editing.id}`, fd, { headers:{'Content-Type':'multipart/form-data'} })
     else await api.post('/students', fd, { headers:{'Content-Type':'multipart/form-data'} })
     setModal(null); setEditing(null); setForm({name:'',description:''}); setPhoto(null); load()
+  }
+
+  const handleDelete = async (id) => {
+    if (!confirm('Tem certeza que deseja excluir este aluno?')) return
+    try {
+      await api.delete(`/students/${id}`)
+      load()
+    } catch (e) {
+      alert(e.response?.data?.error || 'Erro ao excluir')
+    }
   }
 
   const engColor = score => score>50?'#00ff88':score>20?'#66cc88':score>5?'#ffcc00':'#ff7070'
@@ -209,6 +219,11 @@ export default function StudentsPage() {
               {isAllowed && (
                 <button className="btn-g w-full justify-center mt-5" onClick={()=>{setEditing(selected);setForm({name:selected.name,description:selected.description||''});setModal('form')}}>
                   <Edit2 size={14}/> Editar
+                </button>
+              )}
+              {isAllowed && (
+                <button className="btn-danger w-full justify-center mt-2" onClick={()=>{handleDelete(selected.id);setModal(null)}}>
+                  <Trash2 size={14}/> Excluir
                 </button>
               )}
               <button className="btn-ghost w-full justify-center mt-2" onClick={()=>setModal(null)}>
