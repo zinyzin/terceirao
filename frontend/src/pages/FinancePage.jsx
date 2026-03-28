@@ -24,8 +24,12 @@ export default function FinancePage() {
 
   const load = async () => {
     if (!isAllowed) {
-      const { data } = await axios.get('/api/public/finance')
-      setPublicData(data)
+      const [financeRes, ledgerRes] = await Promise.all([
+        axios.get('/api/public/finance'),
+        axios.get('/api/public/ledger')
+      ])
+      setPublicData(financeRes.data)
+      setLedger(ledgerRes.data)
       return
     }
     const [w,l,s] = await Promise.all([api.get('/finance/wallet'), api.get('/finance/ledger'), api.get('/students')])
@@ -65,39 +69,12 @@ export default function FinancePage() {
         )}
       </div>
 
-      {!isAllowed && (
-        <div className="glass p-5">
-          <p className="text-xs text-green-800 uppercase tracking-wider mb-3">Termômetro da Formatura</p>
-          <div className="w-full h-4 rounded-full" style={{ background:'rgba(0,255,136,0.10)', border:'1px solid rgba(0,255,136,0.16)' }}>
-            <div
-              className="h-full rounded-full"
-              style={{
-                width: `${Math.round((publicData?.progress ?? 0) * 100)}%`,
-                background: 'linear-gradient(90deg,#00ff88,#00ccff)',
-                boxShadow: '0 0 16px rgba(0,255,136,0.25)',
-              }}
-            />
-          </div>
-          <div className="flex justify-between text-xs mt-3">
-            <span className="text-green-800">Arrecadado</span>
-            <span className="money-pos font-mono font-bold">{fmt(publicData?.raised)}</span>
-          </div>
-          <div className="flex justify-between text-xs mt-1">
-            <span className="text-green-800">Meta</span>
-            <span className="text-green-500 font-mono font-bold">{fmt(publicData?.goalAmount)}</span>
-          </div>
-          <p className="text-xs text-green-900 mt-4">Para ver o fluxo de caixa completo, é necessário acesso de Admin autorizado.</p>
-        </div>
-      )}
-
-      {isAllowed && (
-        <>
-
+      {/* Stats cards for all users */}
       <div className="grid sm:grid-cols-3 gap-4">
         {[
-          {l:'Saldo Atual', v:fmt(wallet?.balance), c:'#00ff88'},
-          {l:'Total Entradas', v:fmt(wallet?.balance>=0?undefined:0), c:'#00ccff'},
-          {l:'Registros', v:ledger.total, c:'#ffcc00'},
+          {l:'Saldo Atual', v:fmt(isAllowed ? wallet?.balance : ledger?.balance), c:'#00ff88'},
+          {l:'Total Arrecadado', v:fmt(publicData?.raised || (isAllowed ? wallet?.balance : ledger?.balance)), c:'#00ccff'},
+          {l:'Registros', v:ledger?.total || 0, c:'#ffcc00'},
         ].map((s,i)=>(
           <motion.div key={s.l} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*.08}} className="glass p-5">
             <p className="text-xs text-green-800 uppercase tracking-wider mb-2">{s.l}</p>
@@ -106,15 +83,42 @@ export default function FinancePage() {
         ))}
       </div>
 
+      {/* Goal progress for all users */}
+      <div className="glass p-5">
+        <p className="text-xs text-green-800 uppercase tracking-wider mb-3">Termômetro da Formatura</p>
+        <div className="w-full h-4 rounded-full" style={{ background:'rgba(0,255,136,0.10)', border:'1px solid rgba(0,255,136,0.16)' }}>
+          <div
+            className="h-full rounded-full"
+            style={{
+              width: `${Math.round((publicData?.progress ?? (ledger?.balance / (publicData?.goalAmount || 1))) * 100)}%`,
+              background: 'linear-gradient(90deg,#00ff88,#00ccff)',
+              boxShadow: '0 0 16px rgba(0,255,136,0.25)',
+            }}
+          />
+        </div>
+        <div className="flex justify-between text-xs mt-3">
+          <span className="text-green-800">Arrecadado</span>
+          <span className="money-pos font-mono font-bold">{fmt(publicData?.raised || ledger?.balance)}</span>
+        </div>
+        <div className="flex justify-between text-xs mt-1">
+          <span className="text-green-800">Meta</span>
+          <span className="text-green-500 font-mono font-bold">{fmt(publicData?.goalAmount)}</span>
+        </div>
+        {!isAllowed && (
+          <p className="text-xs text-green-900 mt-4">Você tem acesso apenas para visualização. Entre em contato com um administrador para adicionar entradas ou saídas.</p>
+        )}
+      </div>
+
+      {/* Ledger table for all users */}
       <div className="glass overflow-hidden">
         <div className="p-4 border-b border-green-900/40">
           <h2 className="font-display text-sm font-semibold text-green-300">Extrato (Ledger Imutável)</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="tbl">
-            <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Aluno</th><th>Valor</th><th>Ações</th></tr></thead>
+            <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Aluno</th><th>Valor</th>{isAllowed && <th>Ações</th>}</tr></thead>
             <tbody>
-              {ledger.entries.map(e=>(
+              {ledger?.entries?.map(e=>(
                 <tr key={e.id}>
                   <td className="font-mono text-xs text-green-800">{new Date(e.createdAt).toLocaleDateString('pt-BR')}</td>
                   <td><span className={e.type==='CREDIT'?'badge badge-g':e.type==='DEBIT'?'badge badge-r':'badge badge-y'}>
@@ -125,44 +129,47 @@ export default function FinancePage() {
                   <td className={`font-mono text-sm font-semibold ${e.type==='CREDIT'?'money-pos':'money-neg'}`}>
                     {e.type==='CREDIT'?'+':'-'}{fmt(e.amount)}
                   </td>
-                  <td>
-                    <div className="flex gap-2">
-                      {e.type!=='REVERSAL' && (
-                        <button onClick={()=>reverse(e.id)} className="text-green-800 hover:text-yellow-400 transition-colors" title="Estornar"><RefreshCw size={13}/></button>
-                      )}
-                      {isSuperadmin && (
-                        <button onClick={()=>deleteEntry(e.id)} className="text-green-800 hover:text-red-400 transition-colors" title="Deletar"><Trash2 size={13}/></button>
-                      )}
-                    </div>
-                  </td>
+                  {isAllowed && (
+                    <td>
+                      <div className="flex gap-2">
+                        {e.type!=='REVERSAL' && (
+                          <button onClick={()=>reverse(e.id)} className="text-green-800 hover:text-yellow-400 transition-colors" title="Estornar"><RefreshCw size={13}/></button>
+                        )}
+                        {isSuperadmin && (
+                          <button onClick={()=>deleteEntry(e.id)} className="text-green-800 hover:text-red-400 transition-colors" title="Deletar"><Trash2 size={13}/></button>
+                        )}
+                      </div>
+                    </td>
+                  )}
                 </tr>
               ))}
-              {!ledger.entries.length && <tr><td colSpan={6} className="text-center text-green-900 py-8">Sem movimentações</td></tr>}
+              {!ledger?.entries?.length && <tr><td colSpan={isAllowed ? 6 : 5} className="text-center text-green-900 py-8">Sem movimentações</td></tr>}
             </tbody>
           </table>
         </div>
       </div>
 
-      <Modal open={!!modal} onClose={()=>setModal(null)} title={modal==='credit'?'📈 Nova Entrada':'📉 Nova Saída'}>
-        <form onSubmit={submit} className="space-y-4">
-          <div><label className="lbl">Valor (R$) *</label><input type="number" step="0.01" min="0.01" className="inp" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})} required/></div>
-          <div><label className="lbl">Descrição *</label><input className="inp" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} required/></div>
-          {modal==='credit' && (
-            <div><label className="lbl">Aluno (opcional)</label>
-              <select className="inp" value={form.studentId} onChange={e=>setForm({...form,studentId:e.target.value})}>
-                <option value="">— Nenhum —</option>
-                {students.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
-              </select>
+      {/* Modal only for authorized users */}
+      {isAllowed && (
+        <Modal open={!!modal} onClose={()=>setModal(null)} title={modal==='credit'?'📈 Nova Entrada':'📉 Nova Saída'}>
+          <form onSubmit={submit} className="space-y-4">
+            <div><label className="lbl">Valor (R$) *</label><input type="number" step="0.01" min="0.01" className="inp" value={form.amount} onChange={e=>setForm({...form,amount:e.target.value})} required/></div>
+            <div><label className="lbl">Descrição *</label><input className="inp" value={form.description} onChange={e=>setForm({...form,description:e.target.value})} required/></div>
+            {modal==='credit' && (
+              <div><label className="lbl">Aluno (opcional)</label>
+                <select className="inp" value={form.studentId} onChange={e=>setForm({...form,studentId:e.target.value})}>
+                  <option value="">— Nenhum —</option>
+                  {students.map(s=><option key={s.id} value={s.id}>{s.name}</option>)}
+                </select>
+              </div>
+            )}
+            {err && <p className="text-red-400 text-xs text-center">{err}</p>}
+            <div className="flex gap-3 pt-2">
+              <button type="button" onClick={()=>setModal(null)} className="btn-danger flex-1 justify-center">Cancelar</button>
+              <button type="submit" className="btn-g flex-1 justify-center">Confirmar</button>
             </div>
-          )}
-          {err && <p className="text-red-400 text-xs text-center">{err}</p>}
-          <div className="flex gap-3 pt-2">
-            <button type="button" onClick={()=>setModal(null)} className="btn-danger flex-1 justify-center">Cancelar</button>
-            <button type="submit" className="btn-g flex-1 justify-center">Confirmar</button>
-          </div>
-        </form>
-      </Modal>
-        </>
+          </form>
+        </Modal>
       )}
     </div>
   )
