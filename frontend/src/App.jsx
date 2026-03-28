@@ -1,6 +1,8 @@
 // src/App.jsx
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { useEffect } from 'react'
 import { useAuthStore } from './store/auth'
+import { useThemeStore } from './store/theme'
 import HomePage from './pages/HomePage'
 import AdminLayout from './pages/AdminLayout'
 import DashPage from './pages/DashPage'
@@ -22,9 +24,20 @@ function Guard({ children, role }) {
   return children
 }
 
+function AppInitializer() {
+  const { initTheme } = useThemeStore()
+  
+  useEffect(() => {
+    initTheme()
+  }, [initTheme])
+  
+  return null
+}
+
 export default function App() {
   return (
     <BrowserRouter>
+      <AppInitializer />
       <ToastContainer />
       <Routes>
         <Route path="/" element={<HomePage/>}/>

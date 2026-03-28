@@ -7,6 +7,7 @@ import {
   Ticket, Package, Shield, ClipboardList, LogOut, Menu, X, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import Panther from './Panther'
+import ThemeToggle from './ThemeToggle'
 import { useAuthStore } from '../store/auth'
 import api from '../lib/api'
 
@@ -86,6 +87,10 @@ export default function Sidebar() {
             <p className="text-xs text-slate-400 font-mono">{user?.role}</p>
           </div>
         )}
+        <div className={`flex items-center gap-2 ${collapsed ? 'justify-center' : ''}`}>
+          <ThemeToggle />
+          {!collapsed && <span className="text-xs text-slate-400">Tema</span>}
+        </div>
         <button onClick={handleLogout}
           className={`flex items-center gap-2 w-full px-3 py-2 rounded-lg text-slate-300 hover:text-red-400 hover:bg-red-900/15 transition-all text-sm ${collapsed?'justify-center':''}`}>
           <LogOut size={15}/>
