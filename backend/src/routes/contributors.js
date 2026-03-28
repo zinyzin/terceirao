@@ -48,4 +48,63 @@ router.delete('/:id', requirePermission('contributors:manage'), async (req, res,
   } catch (err) { next(err); }
 });
 
+// PUT /api/contributors/:contributorId/donations/:donationId — edit donation
+router.put('/:contributorId/donations/:donationId', requirePermission('contributors:manage'), async (req, res, next) => {
+  try {
+    const { amount, description } = z.object({ 
+      amount: z.number().positive(), 
+      description: z.string().optional() 
+    }).parse(req.body);
+    
+    const donation = await prisma.donation.findUnique({ 
+      where: { id: req.params.donationId },
+      include: { contributor: true }
+    });
+    if (!donation) throw new AppError('Doação não encontrada', 404);
+    
+    // Update donation
+    const updated = await prisma.donation.update({
+      where: { id: req.params.donationId },
+      data: { amount, description }
+    });
+    
+    // Find and update related ledger entry
+    const ledgerEntry = await prisma.ledgerEntry.findFirst({
+      where: { referenceId: donation.id, referenceType: 'DONATION' }
+    });
+    
+    if (ledgerEntry) {
+      await prisma.ledgerEntry.update({
+        where: { id: ledgerEntry.id },
+        data: { 
+          amount,
+          description: `Doação de ${donation.contributor.name}${description ? ': ' + description : ''}`
+        }
+      });
+    }
+    
+    res.json(updated);
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/contributors/:contributorId/donations/:donationId — delete donation
+router.delete('/:contributorId/donations/:donationId', requirePermission('contributors:manage'), async (req, res, next) => {
+  try {
+    const donation = await prisma.donation.findUnique({ 
+      where: { id: req.params.donationId }
+    });
+    if (!donation) throw new AppError('Doação não encontrada', 404);
+    
+    // Delete related ledger entry
+    await prisma.ledgerEntry.deleteMany({
+      where: { referenceId: donation.id, referenceType: 'DONATION' }
+    });
+    
+    // Delete donation
+    await prisma.donation.delete({ where: { id: req.params.donationId } });
+    
+    res.json({ message: 'Doação removida' });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;

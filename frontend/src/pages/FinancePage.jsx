@@ -1,7 +1,7 @@
 // src/pages/FinancePage.jsx
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { TrendingUp, TrendingDown, RefreshCw, Download, Trash2 } from 'lucide-react'
+import { TrendingUp, TrendingDown, RefreshCw, Download, Trash2, ChevronLeft, ChevronRight, Calendar } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import axios from 'axios'
@@ -18,6 +18,13 @@ export default function FinancePage() {
   const [form, setForm] = useState({ amount:'', description:'', studentId:'' })
   const [err, setErr] = useState('')
   const [publicData, setPublicData] = useState(null)
+  
+  // Pagination and filters
+  const [page, setPage] = useState(1)
+  const [limit] = useState(10)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [typeFilter, setTypeFilter] = useState('')
 
   const isAllowed = isAuth && can('finance:detail')
   const isSuperadmin = user?.role === 'SUPERADMIN'
@@ -32,11 +39,24 @@ export default function FinancePage() {
       setLedger(ledgerRes.data)
       return
     }
-    const [w,l,s] = await Promise.all([api.get('/finance/wallet'), api.get('/finance/ledger'), api.get('/students')])
+    
+    // Build query params for pagination and filters
+    const params = new URLSearchParams()
+    params.append('page', page)
+    params.append('limit', limit)
+    if (startDate) params.append('startDate', startDate)
+    if (endDate) params.append('endDate', endDate)
+    if (typeFilter) params.append('type', typeFilter)
+    
+    const [w,l,s] = await Promise.all([
+      api.get('/finance/wallet'), 
+      api.get(`/finance/ledger?${params.toString()}`), 
+      api.get('/students')
+    ])
     setWallet(w.data); setLedger(l.data); setStudents(s.data)
   }
 
-  useEffect(()=>{ load() },[isAllowed])
+  useEffect(()=>{ load() },[isAllowed, page, startDate, endDate, typeFilter])
 
   const submit = async e => {
     e.preventDefault(); setErr('')
@@ -111,9 +131,50 @@ export default function FinancePage() {
 
       {/* Ledger table for all users */}
       <div className="glass overflow-hidden">
-        <div className="p-4 border-b border-green-900/40">
+        <div className="p-4 border-b border-green-900/40 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <h2 className="font-display text-sm font-semibold text-green-300">Extrato (Ledger Imutável)</h2>
+          
+          {/* Filters */}
+          <div className="flex flex-wrap gap-2 items-center">
+            <select 
+              className="inp text-xs py-1 px-2" 
+              value={typeFilter} 
+              onChange={e=>{setTypeFilter(e.target.value); setPage(1)}}
+            >
+              <option value="">Todos os tipos</option>
+              <option value="CREDIT">Entradas</option>
+              <option value="DEBIT">Saídas</option>
+              <option value="REVERSAL">Estornos</option>
+            </select>
+            <div className="flex items-center gap-1">
+              <Calendar size={14} className="text-green-800"/>
+              <input 
+                type="date" 
+                className="inp text-xs py-1 px-2" 
+                value={startDate} 
+                onChange={e=>{setStartDate(e.target.value); setPage(1)}}
+                placeholder="De"
+              />
+              <span className="text-green-800">-</span>
+              <input 
+                type="date" 
+                className="inp text-xs py-1 px-2" 
+                value={endDate} 
+                onChange={e=>{setEndDate(e.target.value); setPage(1)}}
+                placeholder="Até"
+              />
+            </div>
+            {(startDate || endDate || typeFilter) && (
+              <button 
+                className="text-xs text-green-800 hover:text-green-600"
+                onClick={()=>{setStartDate(''); setEndDate(''); setTypeFilter(''); setPage(1)}}
+              >
+                Limpar
+              </button>
+            )}
+          </div>
         </div>
+        
         <div className="overflow-x-auto">
           <table className="tbl">
             <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Aluno</th><th>Valor</th>{isAllowed && <th>Ações</th>}</tr></thead>
@@ -147,6 +208,32 @@ export default function FinancePage() {
             </tbody>
           </table>
         </div>
+        
+        {/* Pagination */}
+        {ledger?.total > 0 && (
+          <div className="p-4 border-t border-green-900/40 flex items-center justify-between">
+            <p className="text-xs text-green-800">
+              Mostrando {((page-1)*limit)+1} - {Math.min(page*limit, ledger.total)} de {ledger.total} registros
+            </p>
+            <div className="flex gap-2">
+              <button 
+                className="btn-ghost px-3 py-1 text-xs disabled:opacity-50"
+                onClick={()=>setPage(p=>p-1)}
+                disabled={page <= 1}
+              >
+                <ChevronLeft size={14}/> Anterior
+              </button>
+              <span className="text-xs text-green-800 py-1">Página {page}</span>
+              <button 
+                className="btn-ghost px-3 py-1 text-xs disabled:opacity-50"
+                onClick={()=>setPage(p=>p+1)}
+                disabled={page*limit >= ledger.total}
+              >
+                Próxima <ChevronRight size={14}/>
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Modal only for authorized users */}

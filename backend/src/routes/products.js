@@ -53,4 +53,81 @@ router.delete('/:id', requirePermission('finance:detail'), async (req, res, next
   } catch (err) { next(err); }
 });
 
+// GET /api/products/:id/sales — get sales history for a product
+router.get('/:id/sales', requirePermission('finance:detail'), async (req, res, next) => {
+  try {
+    const sales = await prisma.sale.findMany({
+      where: { productId: req.params.id },
+      include: { student: { select: { name: true } } },
+      orderBy: { createdAt: 'desc' }
+    });
+    res.json(sales);
+  } catch (err) { next(err); }
+});
+
+// PUT /api/products/:productId/sales/:saleId — edit a sale
+router.put('/:productId/sales/:saleId', requirePermission('finance:detail'), async (req, res, next) => {
+  try {
+    const { quantity, studentId } = z.object({
+      quantity: z.number().int().positive(),
+      studentId: z.string().optional()
+    }).parse(req.body);
+
+    const sale = await prisma.sale.findUnique({
+      where: { id: req.params.saleId },
+      include: { product: true }
+    });
+    if (!sale) throw new AppError('Venda não encontrada', 404);
+
+    const newTotal = parseFloat(sale.product.price) * quantity;
+
+    // Update sale
+    const updated = await prisma.sale.update({
+      where: { id: req.params.saleId },
+      data: { quantity, total: newTotal, studentId: studentId || null }
+    });
+
+    // Update related ledger entry
+    const ledgerEntry = await prisma.ledgerEntry.findFirst({
+      where: {
+        referenceId: sale.id,
+        referenceType: 'PRODUCT'
+      }
+    });
+
+    if (ledgerEntry) {
+      await prisma.ledgerEntry.update({
+        where: { id: ledgerEntry.id },
+        data: {
+          amount: newTotal,
+          description: `Venda: ${sale.product.name} x${quantity}`,
+          studentId: studentId || null
+        }
+      });
+    }
+
+    res.json(updated);
+  } catch (err) { next(err); }
+});
+
+// DELETE /api/products/:productId/sales/:saleId — delete a sale
+router.delete('/:productId/sales/:saleId', requirePermission('finance:detail'), async (req, res, next) => {
+  try {
+    const sale = await prisma.sale.findUnique({
+      where: { id: req.params.saleId }
+    });
+    if (!sale) throw new AppError('Venda não encontrada', 404);
+
+    // Delete related ledger entry
+    await prisma.ledgerEntry.deleteMany({
+      where: { referenceId: sale.id, referenceType: 'PRODUCT' }
+    });
+
+    // Delete sale
+    await prisma.sale.delete({ where: { id: req.params.saleId } });
+
+    res.json({ message: 'Venda removida' });
+  } catch (err) { next(err); }
+});
+
 module.exports = router;
