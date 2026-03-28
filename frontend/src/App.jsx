@@ -14,6 +14,7 @@ import RafflesPage from './pages/RafflesPage'
 import UsersPage from './pages/UsersPage'
 import AuditPage from './pages/AuditPage'
 import ProductsPage from './pages/ProductsPage'
+import SettingsPage from './pages/SettingsPage'
 import ToastContainer from './components/Toast'
 
 function Guard({ children, role }) {
@@ -62,6 +63,7 @@ export default function App() {
           <Route path="financeiro" element={<FinancePage/>}/>
           <Route path="produtos" element={<ProductsPage/>}/>
           <Route path="rifas" element={<RafflesPage/>}/>
+          <Route path="settings" element={<Guard role="superadmin"><SettingsPage/></Guard>}/>
           <Route path="users" element={<Guard role="superadmin"><UsersPage/></Guard>}/>
           <Route path="audit" element={<Guard role="superadmin"><AuditPage/></Guard>}/>
         </Route>
