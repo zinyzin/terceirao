@@ -18,7 +18,11 @@ import SettingsPage from './pages/SettingsPage'
 import TrashPage from './pages/TrashPage'
 import ReportsPage from './pages/ReportsPage'
 import EventsPage from './pages/EventsPage'
+import AdminGalleryPage from './pages/AdminGalleryPage'
+import GalleryPage from './pages/GalleryPage'
+import PublicLayout from './pages/PublicLayout'
 import ToastContainer from './components/Toast'
+import ConfirmModal from './components/ConfirmModal'
 
 function Guard({ children, role }) {
   const { isAuth, isAdmin, isSA } = useAuthStore()
@@ -43,18 +47,22 @@ export default function App() {
     <BrowserRouter>
       <AppInitializer />
       <ToastContainer />
+      <ConfirmModal />
       <Routes>
         <Route path="/" element={<HomePage/>}/>
 
-        <Route path="/alunos" element={<StudentsPage/>}/>
+        <Route element={<PublicLayout/>}>
+          <Route path="/alunos" element={<StudentsPage/>}/>
+          <Route path="/professores" element={<TeachersPage/>}/>
+          <Route path="/financeiro" element={<FinancePage/>}/>
+          <Route path="/rifas" element={<RafflesPage/>}/>
+          <Route path="/contribuidores" element={<ContributorsPage/>}/>
+          <Route path="/galeria" element={<GalleryPage/>}/>
+        </Route>
         <Route path="/students" element={<Navigate to="/alunos" replace/>}/>
-        <Route path="/professores" element={<TeachersPage/>}/>
         <Route path="/teachers" element={<Navigate to="/professores" replace/>}/>
-        <Route path="/financeiro" element={<FinancePage/>}/>
         <Route path="/finance" element={<Navigate to="/financeiro" replace/>}/>
-        <Route path="/rifas" element={<RafflesPage/>}/>
         <Route path="/raffles" element={<Navigate to="/rifas" replace/>}/>
-        <Route path="/contribuidores" element={<ContributorsPage/>}/>
         <Route path="/contributors" element={<Navigate to="/contribuidores" replace/>}/>
 
         <Route path="/admin" element={<Guard role="admin"><AdminLayout/></Guard>}>
@@ -70,6 +78,7 @@ export default function App() {
           <Route path="trash" element={<Guard role="superadmin"><TrashPage/></Guard>}/>
           <Route path="reports" element={<Guard role="admin"><ReportsPage/></Guard>}/>
           <Route path="events" element={<Guard role="admin"><EventsPage/></Guard>}/>
+          <Route path="galeria" element={<Guard role="admin"><AdminGalleryPage/></Guard>}/>
           <Route path="users" element={<Guard role="superadmin"><UsersPage/></Guard>}/>
           <Route path="audit" element={<Guard role="superadmin"><AuditPage/></Guard>}/>
         </Route>

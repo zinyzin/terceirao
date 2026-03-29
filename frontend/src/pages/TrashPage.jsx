@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { Trash2, RotateCcw, AlertTriangle, User, GraduationCap, Package, Search } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
+import { toast } from '../components/Toast'
 
 const typeIcons = {
   STUDENT: User,
@@ -31,7 +32,7 @@ export default function TrashPage() {
       const { data } = await api.get('/trash')
       setItems(data.items)
     } catch (e) {
-      console.error('Erro ao carregar lixeira:', e)
+      toast.error(e.response?.data?.error || 'Erro ao carregar lixeira')
     } finally {
       setLoading(false)
     }
@@ -49,7 +50,7 @@ export default function TrashPage() {
       load()
       setTimeout(() => setMessage(''), 3000)
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao restaurar')
+      toast.error(e.response?.data?.error || 'Erro ao restaurar item')
     }
   }
 
@@ -63,7 +64,7 @@ export default function TrashPage() {
       load()
       setTimeout(() => setMessage(''), 3000)
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao excluir')
+      toast.error(e.response?.data?.error || 'Erro ao excluir item permanentemente')
     }
   }
 

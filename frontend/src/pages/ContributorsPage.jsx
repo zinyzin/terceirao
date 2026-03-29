@@ -1,11 +1,13 @@
 // src/pages/ContributorsPage.jsx
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Plus, DollarSign, Trash2, Edit2, X, Search } from 'lucide-react'
+import { Plus, DollarSign, Trash2, Edit2, X, Search, Heart } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import axios from 'axios'
 import { useAuthStore } from '../store/auth'
+import { toast } from '../components/Toast'
+import { confirm } from '../components/ConfirmModal'
 
 const fmt = n => `R$ ${Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
 
@@ -23,13 +25,17 @@ export default function ContributorsPage() {
   const isAllowed = isAuth && can('contributors:manage')
 
   const load = async () => {
-    if (!isAllowed) {
-      const { data } = await axios.get('/api/public/contributors')
+    try {
+      if (!isAllowed) {
+        const { data } = await axios.get('/api/public/contributors')
+        setList(data)
+        return
+      }
+      const { data } = await api.get('/contributors')
       setList(data)
-      return
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Erro ao carregar contribuidores')
     }
-    const { data } = await api.get('/contributors')
-    setList(data)
   }
   useEffect(()=>{ load() },[isAllowed])
 
@@ -59,17 +65,18 @@ export default function ContributorsPage() {
       setDon({amount:'',description:''})
       load()
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao editar doação')
+      toast.error(e.response?.data?.error || 'Erro ao editar doação')
     }
   }
 
   const handleDeleteDonation = async (contributorId, donationId) => {
-    if (!confirm('Tem certeza que deseja excluir esta doação?')) return
+    if (!await confirm('Tem certeza que deseja excluir esta doação?', 'Excluir Doação')) return
     try {
       await api.delete(`/contributors/${contributorId}/donations/${donationId}`)
+      toast.success('Doação removida.')
       load()
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao excluir doação')
+      toast.error(e.response?.data?.error || 'Erro ao excluir doação')
     }
   }
 
@@ -86,12 +93,13 @@ export default function ContributorsPage() {
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja excluir este contribuidor?')) return
+    if (!await confirm('Tem certeza que deseja excluir este contribuidor?', 'Excluir Contribuidor')) return
     try {
       await api.delete(`/contributors/${id}`)
+      toast.success('Contribuidor excluído.')
       load()
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao excluir')
+      toast.error(e.response?.data?.error || 'Erro ao excluir contribuidor')
     }
   }
 
@@ -119,7 +127,15 @@ export default function ContributorsPage() {
               <p className="text-xs text-green-900">Ranking por níveis (sem valores exatos).</p>
             </motion.div>
           ))}
-          {!list.length && <div className="text-center text-green-900 py-12">Nenhum contribuidor ainda</div>}
+          {!list.length && (
+            <div className="glass p-12 flex flex-col items-center justify-center text-center gap-3 col-span-full">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{background:'rgba(96,165,250,0.08)',border:'1px solid rgba(96,165,250,0.15)'}}>
+                <Heart size={24} className="text-blue-400/50"/>
+              </div>
+              <p className="font-display text-blue-100/60 font-semibold">Nenhum contribuidor ainda</p>
+              <p className="text-xs text-slate-500">Os contribuidores aparecerão aqui em breve</p>
+            </div>
+          )}
         </div>
       ) : (
         <>

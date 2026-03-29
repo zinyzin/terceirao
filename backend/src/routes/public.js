@@ -64,6 +64,8 @@ router.get('/info', async (req, res, next) => {
 
       totalRaised: parseFloat(totalRaised._sum.amount || 0),
 
+      goalAmount: parseFloat(settingsMap.goalAmount || 0),
+
       siteName: settingsMap.siteName || 'Turma Pantera',
 
       siteDescription: settingsMap.siteDescription || 'Sistema de gestão do 3º Ano',

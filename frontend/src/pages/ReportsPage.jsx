@@ -3,6 +3,7 @@ import { useState } from 'react'
 import { motion } from 'framer-motion'
 import { FileText, Download, Calendar, DollarSign, Users, Package, TrendingUp } from 'lucide-react'
 import api from '../lib/api'
+import { toast } from '../components/Toast'
 
 export default function ReportsPage() {
   const [loading, setLoading] = useState(false)
@@ -30,8 +31,7 @@ export default function ReportsPage() {
       document.body.removeChild(link)
       window.URL.revokeObjectURL(downloadUrl)
     } catch (e) {
-      alert('Erro ao gerar relatório. Tente novamente.')
-      console.error(e)
+      toast.error(e.response?.data?.error || 'Erro ao gerar relatório. Tente novamente.')
     } finally {
       setLoading(false)
     }

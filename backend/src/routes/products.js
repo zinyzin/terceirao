@@ -34,13 +34,16 @@ router.post('/:id/sell', requirePermission('finance:detail'), async (req, res, n
     if (!product) throw new AppError('Produto não encontrado', 404);
 
     const total = parseFloat(product.price) * quantity;
-    await prisma.sale.create({ data: { productId: product.id, quantity, total, studentId: studentId || null } });
 
     let wallet = await prisma.wallet.findFirst();
     if (!wallet) wallet = await prisma.wallet.create({ data: {} });
-    await prisma.ledgerEntry.create({
-      data: { walletId: wallet.id, type: 'CREDIT', amount: total, description: `Venda: ${product.name} x${quantity}`, studentId: studentId || null, referenceType: 'PRODUCT' },
-    });
+
+    await prisma.$transaction([
+      prisma.sale.create({ data: { productId: product.id, quantity, total, studentId: studentId || null } }),
+      prisma.ledgerEntry.create({
+        data: { walletId: wallet.id, type: 'CREDIT', amount: total, description: `Venda: ${product.name} x${quantity}`, studentId: studentId || null, referenceType: 'PRODUCT' },
+      }),
+    ]);
     res.status(201).json({ message: 'Venda registrada', total });
   } catch (err) { next(err); }
 });
@@ -81,31 +84,24 @@ router.put('/:productId/sales/:saleId', requirePermission('finance:detail'), asy
 
     const newTotal = parseFloat(sale.product.price) * quantity;
 
-    // Update sale
-    const updated = await prisma.sale.update({
-      where: { id: req.params.saleId },
-      data: { quantity, total: newTotal, studentId: studentId || null }
-    });
-
-    // Update related ledger entry
     const ledgerEntry = await prisma.ledgerEntry.findFirst({
-      where: {
-        referenceId: sale.id,
-        referenceType: 'PRODUCT'
-      }
+      where: { referenceId: sale.id, referenceType: 'PRODUCT' }
     });
 
+    const ops = [
+      prisma.sale.update({
+        where: { id: req.params.saleId },
+        data: { quantity, total: newTotal, studentId: studentId || null }
+      }),
+    ];
     if (ledgerEntry) {
-      await prisma.ledgerEntry.update({
+      ops.push(prisma.ledgerEntry.update({
         where: { id: ledgerEntry.id },
-        data: {
-          amount: newTotal,
-          description: `Venda: ${sale.product.name} x${quantity}`,
-          studentId: studentId || null
-        }
-      });
+        data: { amount: newTotal, description: `Venda: ${sale.product.name} x${quantity}`, studentId: studentId || null },
+      }));
     }
 
+    const [updated] = await prisma.$transaction(ops);
     res.json(updated);
   } catch (err) { next(err); }
 });

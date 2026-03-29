@@ -7,17 +7,30 @@ const { prisma } = require('../lib/prisma');
 const { requireAdmin, requirePermission } = require('../middleware/auth');
 const { AppError } = require('../middleware/error');
 
+const { randomBytes } = require('crypto');
+
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
 const storage = multer.diskStorage({
   destination: path.join(__dirname, '../../uploads/students'),
-  filename: (_, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  filename: (_, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase().replace(/[^.a-z0-9]/g, '') || '.jpg';
+    cb(null, `${Date.now()}-${randomBytes(8).toString('hex')}${ext}`);
+  },
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_, file, cb) => {
+    if (ALLOWED_MIME.includes(file.mimetype)) return cb(null, true);
+    cb(new AppError('Tipo de arquivo não permitido. Use JPEG, PNG, WebP ou GIF.', 400));
+  },
+});
 
 const schema = z.object({
   name: z.string().min(2),
   shortDescription: z.string().optional(),
   longDescription: z.string().optional(),
-  description: z.string().optional(),
   photoFromGallery: z.string().optional(),
 });
 
@@ -64,8 +77,9 @@ router.post('/', requirePermission('students:manage'), upload.single('photo'), a
     const data = schema.parse(req.body);
     const student = await prisma.student.create({
       data: {
-        ...data,
-        description: data.longDescription || data.description,
+        name: data.name,
+        shortDescription: data.shortDescription,
+        longDescription: data.longDescription,
         photo: req.file ? `/uploads/students/${req.file.filename}` : (data.photoFromGallery || null),
       },
     });
@@ -79,8 +93,9 @@ router.put('/:id', requirePermission('students:manage'), upload.single('photo'),
     const updated = await prisma.student.update({
       where: { id: req.params.id },
       data: {
-        ...data,
-        ...(data.longDescription || data.description ? { description: data.longDescription || data.description } : {}),
+        ...(data.name !== undefined ? { name: data.name } : {}),
+        ...(data.shortDescription !== undefined ? { shortDescription: data.shortDescription } : {}),
+        ...(data.longDescription !== undefined ? { longDescription: data.longDescription } : {}),
         ...(req.file ? { photo: `/uploads/students/${req.file.filename}` } : {}),
         ...(!req.file && data.photoFromGallery ? { photo: data.photoFromGallery } : {}),
       },

@@ -50,24 +50,13 @@ function requireRole(...roles) {
 }
 
 function requirePermission(...permissions) {
-  return (req, res, next) => {
-    if (!req.user) {
-      return res.status(401).json({ error: 'Não autenticado' });
-    }
+  const checkFn = (req, res, next) => {
     if (req.user.role === 'SUPERADMIN') return next();
-    
-    // Debug logging (remove in production)
-    console.log('Checking permissions for user:', req.user.id, 'Role:', req.user.role);
-    console.log('User permissions:', req.user.permissions);
-    console.log('Required permissions:', permissions);
-    
     const hasRequiredPermission = permissions.some(permission => hasPermission(req.user, permission));
-    
-    console.log('Has required permission:', hasRequiredPermission);
-    
     if (hasRequiredPermission) return next();
-    return res.status(403).json({ error: 'Sem permissão para acessar este recurso', debug: { userPerms: req.user.permissions, required: permissions } });
+    return res.status(403).json({ error: 'Sem permissão para acessar este recurso' });
   };
+  return [authenticate, checkFn];
 }
 
 const requireAdmin = [authenticate, requireRole('SUPERADMIN', 'ADMIN')];

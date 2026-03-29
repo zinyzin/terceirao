@@ -5,6 +5,8 @@ import { Plus, ToggleLeft, ToggleRight, Key, Trash2, Shield, Search } from 'luci
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import { useAuthStore } from '../store/auth'
+import { toast } from '../components/Toast'
+import { confirm } from '../components/ConfirmModal'
 
 export default function UsersPage() {
   const [users, setUsers] = useState([])
@@ -43,8 +45,14 @@ export default function UsersPage() {
   }
 
   const del = async id => {
-    if (!confirm('Remover este usuário?')) return
-    await api.delete(`/users/${id}`); load()
+    if (!await confirm('Remover este usuário permanentemente?', 'Remover Usuário')) return
+    try {
+      await api.delete(`/users/${id}`)
+      toast.success('Usuário removido.')
+      load()
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Erro ao remover usuário')
+    }
   }
 
   const PERMS = [

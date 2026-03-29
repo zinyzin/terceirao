@@ -1,16 +1,18 @@
 // src/pages/TeachersPage.jsx
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Edit2, Search, Trash2 } from 'lucide-react'
+import { Plus, Edit2, Search, Trash2, Crown, GraduationCap } from 'lucide-react'
 import Modal from '../components/Modal'
-import ForestBg from '../components/ForestBg'
 import { useAuthStore } from '../store/auth'
+import { toast } from '../components/Toast'
+import { confirm } from '../components/ConfirmModal'
 import api from '../lib/api'
 import axios from 'axios'
 
 export default function TeachersPage() {
-  const { isAuth, can } = useAuthStore()
+  const { isAuth, can, isSA } = useAuthStore()
   const isAllowed = isAuth && can('teachers:edit')
+  const isSuperadmin = isSA()
 
   const [teachers, setTeachers] = useState([])
   const [loading, setLoading] = useState(true)
@@ -20,6 +22,7 @@ export default function TeachersPage() {
   const [modal, setModal] = useState(null)
   const [editing, setEditing] = useState(null)
   const [form, setForm] = useState({ name:'', subject:'', shortDescription:'', longDescription:'', catchphrase:'' })
+  const [fieldErrors, setFieldErrors] = useState({})
   const [photo, setPhoto] = useState(null)
 
   const load = async () => {
@@ -32,6 +35,8 @@ export default function TeachersPage() {
       }
       const { data } = await api.get('/teachers')
       setTeachers(data)
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Erro ao carregar professores')
     } finally {
       setLoading(false)
     }
@@ -39,10 +44,25 @@ export default function TeachersPage() {
 
   useEffect(() => { load() }, [isAllowed])
 
-  const filtered = teachers.filter(t => t.name.toLowerCase().includes(search.toLowerCase()))
+  const setCounselor = async (id) => {
+    try {
+      await api.patch(`/teachers/${id}/counselor`)
+      toast.success('Professor Conselheiro definido!')
+      load()
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Erro ao definir conselheiro')
+    }
+  }
+
+  const counselor = teachers.find(t => t.isCounselor)
+  const filtered = teachers.filter(t => !t.isCounselor && t.name.toLowerCase().includes(search.toLowerCase()))
 
   const handleSubmit = async e => {
     e.preventDefault()
+    const errs = {}
+    if (!form.name.trim()) errs.name = 'Nome é obrigatório'
+    if (Object.keys(errs).length) { setFieldErrors(errs); return }
+    setFieldErrors({})
     try {
       const fd = new FormData()
       fd.append('name', form.name)
@@ -53,29 +73,27 @@ export default function TeachersPage() {
       if (photo) fd.append('photo', photo)
       if (editing) await api.put(`/teachers/${editing.id}`, fd, { headers:{'Content-Type':'multipart/form-data'} })
       else await api.post('/teachers', fd, { headers:{'Content-Type':'multipart/form-data'} })
-      setModal(null); setEditing(null); setForm({name:'',subject:'',shortDescription:'',longDescription:'',catchphrase:''}); setPhoto(null); load()
+      setModal(null); setEditing(null); setForm({name:'',subject:'',shortDescription:'',longDescription:'',catchphrase:''}); setPhoto(null); setFieldErrors({}); load()
+      toast.success(editing ? 'Professor atualizado!' : 'Professor criado!')
     } catch (e) {
       console.error('Erro ao salvar:', e)
-      alert(e.response?.data?.error || e.message || 'Erro ao salvar professor')
+      toast.error(e.response?.data?.error || e.message || 'Erro ao salvar professor')
     }
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja excluir este professor?')) return
+    if (!await confirm('Tem certeza que deseja excluir este professor?', 'Excluir Professor')) return
     try {
       await api.delete(`/teachers/${id}`)
+      toast.success('Professor excluído.')
       load()
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao excluir')
+      toast.error(e.response?.data?.error || 'Erro ao excluir professor')
     }
   }
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden">
-      <ForestBg/>
-
-      <main className="page-shell pt-10">
-        <div className="max-w-5xl mx-auto space-y-6">
+    <div className="space-y-6">
           <div className="flex items-center justify-between flex-wrap gap-3">
             <h1 className="stitle">Professores</h1>
             {isAllowed && <button className="btn-g" onClick={()=>{setEditing(null);setForm({name:'',subject:'',shortDescription:'',longDescription:'',catchphrase:''});setPhoto(null);setModal('form')}}><Plus size={15}/>Novo Professor</button>}
@@ -88,9 +106,79 @@ export default function TeachersPage() {
             </div>
           )}
 
+          {/* Counselor pedestal */}
+          {!loading && counselor && (
+            <motion.div
+              initial={{ opacity:0, y:20 }}
+              animate={{ opacity:1, y:0 }}
+              className="relative overflow-hidden rounded-2xl p-6 sm:p-8 cursor-pointer"
+              style={{
+                background: 'linear-gradient(135deg, rgba(30,20,5,0.85) 0%, rgba(10,8,2,0.9) 100%)',
+                border: '1px solid rgba(255,204,0,0.4)',
+                boxShadow: '0 0 60px rgba(255,180,0,0.12), 0 20px 60px rgba(0,0,0,0.6)'
+              }}
+              onClick={() => { setSelected(counselor); setModal('detail') }}
+            >
+              {/* Gold shimmer accent */}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 70% 40% at 50% 0%, rgba(255,200,0,0.08) 0%, transparent 70%)' }}/>
+
+              <div className="relative flex flex-col items-center text-center gap-4">
+                {/* Crown */}
+                <motion.div
+                  animate={{ y: [0, -5, 0] }}
+                  transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
+                  className="text-yellow-400"
+                >
+                  <Crown size={32} fill="currentColor"/>
+                </motion.div>
+
+                {/* Photo */}
+                <div className="relative">
+                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden border-2 border-yellow-400/50"
+                    style={{ boxShadow: '0 0 30px rgba(255,200,0,0.25)' }}>
+                    {counselor.photo
+                      ? <img src={counselor.photo} alt={counselor.name} className="w-full h-full object-cover"/>
+                      : <div className="w-full h-full bg-slate-900/50 flex items-center justify-center font-display text-4xl font-bold text-yellow-300">{counselor.name[0]}</div>
+                    }
+                  </div>
+                </div>
+
+                {/* Badge + Name */}
+                <div className="space-y-1">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-yellow-400 tracking-wider uppercase bg-yellow-400/10 border border-yellow-400/25 px-3 py-1 rounded-full">
+                    Professor Conselheiro
+                  </span>
+                  <h2 className="font-display text-2xl sm:text-3xl font-black text-yellow-50">{counselor.name}</h2>
+                  {counselor.subject && <p className="text-sm text-yellow-200/60">Matéria: {counselor.subject}</p>}
+                </div>
+
+                {/* Catchphrase */}
+                {counselor.catchphrase && (
+                  <div className="max-w-lg">
+                    <p className="text-base sm:text-lg text-yellow-100/90 italic font-medium leading-relaxed">
+                      “{counselor.catchphrase}”
+                    </p>
+                  </div>
+                )}
+
+                {counselor.shortDescription && (
+                  <p className="text-sm text-slate-300 max-w-md">{counselor.shortDescription}</p>
+                )}
+              </div>
+            </motion.div>
+          )}
+
           {loading ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(3)].map((_,i)=><div key={i} className="skel h-40 rounded-2xl"/>)}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="glass p-12 flex flex-col items-center justify-center text-center gap-3">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{background:'rgba(96,165,250,0.08)',border:'1px solid rgba(96,165,250,0.15)'}}>
+                <GraduationCap size={24} className="text-blue-400/50"/>
+              </div>
+              <p className="font-display text-blue-100/60 font-semibold">{search ? 'Nenhum professor encontrado' : 'Nenhum professor cadastrado'}</p>
+              <p className="text-xs text-slate-500">{search ? 'Tente outro termo de busca' : isAllowed ? 'Clique em "Novo Professor" para começar' : 'Os professores aparecerão aqui em breve'}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -102,16 +190,14 @@ export default function TeachersPage() {
                   initial={{ opacity: 0, y: 16 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.06 }}
-                  className="glass p-5 cursor-pointer"
+                  className="glass glass-card p-5"
                   onClick={() => setExpandedId(isExpanded ? null : t.id)}
                   layout
-                  style={t.isCounselor ? { borderColor: 'rgba(255,204,0,0.35)', boxShadow: '0 14px 40px rgba(0,0,0,0.55), 0 0 26px rgba(255,204,0,0.08)' } : undefined}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0 flex-1">
                       <p className="font-display font-bold text-blue-50 text-sm">{t.name}</p>
                       <p className="text-xs text-slate-300 mt-1">Matéria: <span className="text-sky-300">{t.subject || '—'}</span></p>
-                      {t.isCounselor && <p className="text-xs text-yellow-400 mt-1 font-semibold">⭐ Professor Conselheiro</p>}
                     </div>
                     <div className="w-12 h-12 rounded-xl bg-slate-900/50 border border-blue-300/20 flex items-center justify-center text-blue-300 font-display font-black flex-shrink-0">
                       {t.photo ? <img src={t.photo} alt={t.name} className="w-full h-full rounded-xl object-cover"/> : t.name[0]}
@@ -172,8 +258,17 @@ export default function TeachersPage() {
 
                 {selected.longDescription && <p className="text-slate-300 text-sm mt-4 whitespace-pre-line">{selected.longDescription}</p>}
 
+                {isSuperadmin && !selected.isCounselor && (
+                  <button
+                    className="w-full justify-center mt-5 flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
+                    style={{ background:'rgba(255,200,0,0.12)', border:'1px solid rgba(255,200,0,0.35)', color:'#fde68a' }}
+                    onClick={()=>{ setCounselor(selected.id); setModal(null) }}
+                  >
+                    <Crown size={15} fill="currentColor"/> Definir como Conselheiro
+                  </button>
+                )}
                 {isAllowed && (
-                  <button className="btn-g w-full justify-center mt-5" onClick={()=>{setEditing(selected);setForm({name:selected.name,subject:selected.subject||'',shortDescription:selected.shortDescription||'',longDescription:selected.longDescription||'',catchphrase:selected.catchphrase||''});setModal('form')}}>
+                  <button className="btn-g w-full justify-center mt-3" onClick={()=>{setEditing(selected);setForm({name:selected.name,subject:selected.subject||'',shortDescription:selected.shortDescription||'',longDescription:selected.longDescription||'',catchphrase:selected.catchphrase||''});setModal('form')}}>
                     <Edit2 size={14}/> Editar
                   </button>
                 )}
@@ -191,7 +286,15 @@ export default function TeachersPage() {
 
           <Modal open={modal==='form'} onClose={()=>setModal(null)} title={editing?'Editar Professor':'Novo Professor'}>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div><label className="lbl">Nome *</label><input className="inp" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required/></div>
+              <div>
+                <label className="lbl">Nome *</label>
+                <input
+                  className={`inp ${fieldErrors.name ? 'border-red-500/60' : ''}`}
+                  value={form.name}
+                  onChange={e=>{setForm({...form,name:e.target.value});setFieldErrors(p=>({...p,name:undefined}))}}
+                />
+                {fieldErrors.name && <p className="text-xs text-red-400 mt-1">{fieldErrors.name}</p>}
+              </div>
               <div><label className="lbl">Matéria</label><input className="inp" value={form.subject} onChange={e=>setForm({...form,subject:e.target.value})}/></div>
               <div><label className="lbl">Descrição Curta</label><textarea className="inp" rows={2} value={form.shortDescription} onChange={e=>setForm({...form,shortDescription:e.target.value})}/></div>
               <div><label className="lbl">Biografia Completa</label><textarea className="inp" rows={4} value={form.longDescription} onChange={e=>setForm({...form,longDescription:e.target.value})}/></div>
@@ -203,8 +306,6 @@ export default function TeachersPage() {
               </div>
             </form>
           </Modal>
-        </div>
-      </main>
     </div>
   )
 }

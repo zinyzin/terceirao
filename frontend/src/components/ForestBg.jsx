@@ -1,8 +1,18 @@
 // src/components/ForestBg.jsx
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useMemo } from 'react'
 
 export default function ForestBg() {
   const bgRef = useRef()
+
+  const fireflies = useMemo(() => Array.from({ length: 20 }, (_, i) => ({
+    id: i,
+    width:  `${2 + Math.random() * 3}px`,
+    height: `${2 + Math.random() * 3}px`,
+    left:   `${5 + Math.random() * 90}%`,
+    top:    `${15 + Math.random() * 70}%`,
+    animationDuration: `${4 + Math.random() * 7}s`,
+    animationDelay:    `${Math.random() * 6}s`,
+  })), [])
 
   useEffect(() => {
     const move = e => {
@@ -19,16 +29,13 @@ export default function ForestBg() {
     <>
       <div ref={bgRef} className="bg-forest" style={{ transition:'transform 0.4s ease-out' }}/>
       <div className="bg-vignette"/>
-      {/* Fireflies */}
       <div style={{ position:'fixed', inset:0, zIndex:2, pointerEvents:'none' }}>
-        {Array.from({ length: 20 }).map((_, i) => (
-          <div key={i} className="ff-particle animate-ff" style={{
-            width: `${2+Math.random()*3}px`,
-            height: `${2+Math.random()*3}px`,
-            left: `${5+Math.random()*90}%`,
-            top: `${15+Math.random()*70}%`,
-            animationDuration: `${4+Math.random()*7}s`,
-            animationDelay: `${Math.random()*6}s`,
+        {fireflies.map(f => (
+          <div key={f.id} className="ff-particle animate-ff" style={{
+            width: f.width, height: f.height,
+            left: f.left, top: f.top,
+            animationDuration: f.animationDuration,
+            animationDelay: f.animationDelay,
           }}/>
         ))}
       </div>

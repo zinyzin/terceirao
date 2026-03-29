@@ -75,6 +75,11 @@ app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
+// Ensure upload directories exist
+['students', 'teachers', 'raffles', 'gallery'].forEach(dir => {
+  fs.mkdirSync(path.join(__dirname, '../uploads', dir), { recursive: true });
+});
+
 // Static uploads
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 

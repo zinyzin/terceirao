@@ -4,6 +4,8 @@ import { motion } from 'framer-motion'
 import { Plus, ShoppingCart, Trash2, Edit2, Package, X, Search } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
+import { toast } from '../components/Toast'
+import { confirm } from '../components/ConfirmModal'
 
 const fmt = n => `R$ ${Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
 
@@ -20,8 +22,12 @@ export default function ProductsPage() {
   const [search, setSearch] = useState('')
 
   const load = async () => {
-    const [p,s] = await Promise.all([api.get('/products'), api.get('/students')])
-    setProducts(p.data); setStudents(s.data)
+    try {
+      const [p,s] = await Promise.all([api.get('/products'), api.get('/students')])
+      setProducts(p.data); setStudents(s.data)
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Erro ao carregar produtos')
+    }
   }
   useEffect(()=>{ load() },[])
 
@@ -68,28 +74,30 @@ export default function ProductsPage() {
       load()
       if (selectedProduct) loadSales(selectedProduct.id)
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao editar venda')
+      toast.error(e.response?.data?.error || 'Erro ao editar venda')
     }
   }
 
   const handleDeleteSale = async (saleId) => {
-    if (!confirm('Tem certeza que deseja excluir esta venda?')) return
+    if (!await confirm('Tem certeza que deseja excluir esta venda?', 'Excluir Venda')) return
     try {
       await api.delete(`/products/${selectedProduct.id}/sales/${saleId}`)
+      toast.success('Venda removida.')
       load()
       if (selectedProduct) loadSales(selectedProduct.id)
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao excluir venda')
+      toast.error(e.response?.data?.error || 'Erro ao excluir venda')
     }
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja excluir este produto?')) return
+    if (!await confirm('Tem certeza que deseja excluir este produto?', 'Excluir Produto')) return
     try {
       await api.delete(`/products/${id}`)
+      toast.success('Produto excluído.')
       load()
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao excluir')
+      toast.error(e.response?.data?.error || 'Erro ao excluir produto')
     }
   }
 

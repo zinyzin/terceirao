@@ -5,6 +5,8 @@ import { Plus, Ticket, Play, Trophy, Trash2, Search } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import { useAuthStore } from '../store/auth'
+import { toast } from '../components/Toast'
+import { confirm } from '../components/ConfirmModal'
 import Panther from '../components/Panther'
 import axios from 'axios'
 
@@ -23,14 +25,18 @@ export default function RafflesPage() {
   const isAllowed = isAuth && can('raffles:manage')
 
   const load = async () => {
-    if (!isAllowed) {
-      const { data } = await axios.get('/api/public/raffles')
-      setRaffles(data)
-      setStudents([])
-      return
+    try {
+      if (!isAllowed) {
+        const { data } = await axios.get('/api/public/raffles')
+        setRaffles(data)
+        setStudents([])
+        return
+      }
+      const [r,s] = await Promise.all([api.get('/raffles'), api.get('/students')])
+      setRaffles(r.data); setStudents(s.data)
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Erro ao carregar rifas')
     }
-    const [r,s] = await Promise.all([api.get('/raffles'), api.get('/students')])
-    setRaffles(r.data); setStudents(s.data)
   }
   useEffect(()=>{ load() },[isAllowed])
 
@@ -47,24 +53,25 @@ export default function RafflesPage() {
   }
 
   const draw = async id => {
-    if (!confirm('Realizar o sorteio? Esta ação é irreversível!')) return
+    if (!await confirm('Realizar o sorteio agora? Esta ação é irreversível!', 'Confirmar Sorteio')) return
     setDrawing(true)
     try {
       const raffle = raffles.find(r=>r.id===id)
       const { data } = await api.post(`/raffles/${id}/draw`)
       setDrawResult({ ...data, raffleTitle:raffle?.title })
       load()
-    } catch(e) { alert(e.response?.data?.error||'Erro') }
+    } catch(e) { toast.error(e.response?.data?.error || 'Erro ao realizar sorteio') }
     finally { setDrawing(false) }
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja excluir esta rifa?')) return
+    if (!await confirm('Tem certeza que deseja excluir esta rifa?', 'Excluir Rifa')) return
     try {
       await api.delete(`/raffles/${id}`)
+      toast.success('Rifa excluída.')
       load()
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao excluir')
+      toast.error(e.response?.data?.error || 'Erro ao excluir rifa')
     }
   }
 
@@ -92,6 +99,15 @@ export default function RafflesPage() {
         </div>
       )}
 
+      {filtered.length === 0 && !loading ? (
+        <div className="glass p-12 flex flex-col items-center justify-center text-center gap-3">
+          <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{background:'rgba(96,165,250,0.08)',border:'1px solid rgba(96,165,250,0.15)'}}>
+            <Ticket size={24} className="text-blue-400/50"/>
+          </div>
+          <p className="font-display text-blue-100/60 font-semibold">{search ? 'Nenhuma rifa encontrada' : 'Nenhuma rifa cadastrada'}</p>
+          <p className="text-xs text-slate-500">{search ? 'Tente outro termo de busca' : isAllowed ? 'Clique em "Nova Rifa" para começar' : 'As rifas aparecerão aqui em breve'}</p>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filtered.map((r,i) => (
           <motion.div key={r.id} initial={{opacity:0,y:20}} animate={{opacity:1,y:0}} transition={{delay:i*.07}} className="glass p-5 flex flex-col gap-3">
@@ -117,7 +133,6 @@ export default function RafflesPage() {
                 Quero Comprar
               </a>
             )}
-
             {isAllowed && r.status==='OPEN' && (
               <div className="flex gap-2 flex-col sm:flex-row">
                 <button className="btn-g flex-1 justify-center text-xs" onClick={()=>{setActiveRaffle(r.id);setModal('participant')}}>
@@ -136,8 +151,8 @@ export default function RafflesPage() {
             )}
           </motion.div>
         ))}
-        {!raffles.length && <div className="col-span-3 text-center text-slate-400 py-12">Nenhuma rifa criada</div>}
       </div>
+      )}
 
       <Modal open={modal==='create'} onClose={()=>setModal(null)} title="🎟️ Nova Rifa">
         <form onSubmit={createRaffle} className="space-y-4">

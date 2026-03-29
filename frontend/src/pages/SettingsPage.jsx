@@ -4,6 +4,8 @@ import { motion } from 'framer-motion'
 import { Save, RefreshCw, Settings, DollarSign, Palette, Globe, Mail } from 'lucide-react'
 import api from '../lib/api'
 import { useAuthStore } from '../store/auth'
+import { toast } from '../components/Toast'
+import { confirm } from '../components/ConfirmModal'
 
 export default function SettingsPage() {
   const { user } = useAuthStore()
@@ -31,7 +33,7 @@ export default function SettingsPage() {
       const { data } = await api.get('/settings')
       setSettings(prev => ({ ...prev, ...data }))
     } catch (e) {
-      console.error('Erro ao carregar configurações:', e)
+      toast.error(e.response?.data?.error || 'Erro ao carregar configurações')
     } finally {
       setLoading(false)
     }
@@ -41,7 +43,7 @@ export default function SettingsPage() {
 
   const handleSave = async () => {
     if (!isSuperadmin) {
-      alert('Apenas Superadmin pode salvar configurações')
+      toast.error('Apenas Superadmin pode salvar configurações')
       return
     }
     
@@ -49,17 +51,18 @@ export default function SettingsPage() {
     setMessage('')
     try {
       await api.put('/settings', settings)
+      toast.success('Configurações salvas com sucesso!')
       setMessage('Configurações salvas com sucesso!')
       setTimeout(() => setMessage(''), 3000)
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao salvar configurações')
+      toast.error(e.response?.data?.error || 'Erro ao salvar configurações')
     } finally {
       setSaving(false)
     }
   }
 
-  const handleReset = () => {
-    if (confirm('Deseja resetar todas as configurações para o padrão?')) {
+  const handleReset = async () => {
+    if (await confirm('Deseja resetar todas as configurações para o padrão?', 'Resetar Configurações')) {
       load()
     }
   }
