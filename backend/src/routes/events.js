@@ -6,7 +6,7 @@ const { requireAdmin } = require('../middleware/auth');
 const { AppError } = require('../middleware/error');
 
 // GET /api/events - list all events
-router.get('/', async (req, res, next) => {
+router.get('/', requireAdmin, async (req, res, next) => {
   try {
     const { startDate, endDate, type } = req.query;
     
@@ -35,7 +35,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // GET /api/events/:id - get single event
-router.get('/:id', async (req, res, next) => {
+router.get('/:id', requireAdmin, async (req, res, next) => {
   try {
     const event = await prisma.event.findUnique({
       where: { id: req.params.id },

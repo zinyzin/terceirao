@@ -1,6 +1,7 @@
 // src/routes/raffles.js
 const router = require('express').Router();
 const crypto = require('crypto');
+const { randomBytes } = crypto;
 const multer = require('multer');
 const path = require('path');
 const { z } = require('zod');
@@ -8,11 +9,23 @@ const { prisma } = require('../lib/prisma');
 const { requireAdmin, requirePermission } = require('../middleware/auth');
 const { AppError } = require('../middleware/error');
 
+const ALLOWED_MIME = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+
 const storage = multer.diskStorage({
   destination: path.join(__dirname, '../../uploads/raffles'),
-  filename: (_, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
+  filename: (_, file, cb) => {
+    const ext = path.extname(file.originalname).toLowerCase().replace(/[^.a-z0-9]/g, '') || '.jpg';
+    cb(null, `${Date.now()}-${randomBytes(8).toString('hex')}${ext}`);
+  },
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_, file, cb) => {
+    if (ALLOWED_MIME.includes(file.mimetype)) return cb(null, true);
+    cb(new AppError('Tipo de arquivo não permitido. Use JPEG, PNG, WebP ou GIF.', 400));
+  },
+});
 
 router.get('/', requirePermission('raffles:manage'), async (req, res, next) => {
   try {

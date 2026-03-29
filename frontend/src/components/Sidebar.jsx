@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useState } from 'react'
 import {
   LayoutDashboard, Users, GraduationCap, UserCheck, DollarSign,
-  Ticket, Package, Shield, ClipboardList, Settings, Trash2, FileText, Calendar, LogOut, Menu, X, ChevronLeft, ChevronRight
+  Ticket, Package, Shield, ClipboardList, Settings, Trash2, FileText, Calendar, Images, LogOut, Menu, X, ChevronLeft, ChevronRight
 } from 'lucide-react'
 import Panther from './Panther'
 import ThemeToggle from './ThemeToggle'
@@ -20,6 +20,7 @@ const NAV = [
   { to:'/admin/produtos', icon:Package, label:'Produtos', role:'admin' },
   { to:'/admin/rifas', icon:Ticket, label:'Rifas', role:'admin' },
   { to:'/admin/events', icon:Calendar, label:'Eventos', role:'admin' },
+  { to:'/admin/galeria', icon:Images, label:'Galeria', role:'admin' },
   { to:'/admin/reports', icon:FileText, label:'Relatórios', role:'admin' },
   { to:'/admin/settings', icon:Settings, label:'Configurações', role:'superadmin' },
   { to:'/admin/trash', icon:Trash2, label:'Lixeira', role:'superadmin' },
@@ -120,7 +121,7 @@ export default function Sidebar() {
               initial={{opacity:0}} animate={{opacity:1}} exit={{opacity:0}} onClick={() => setMob(false)}/>
             <motion.aside className="fixed left-0 top-0 bottom-0 w-60 z-50 md:hidden"
               style={{ background:'rgba(2,6,23,0.97)', backdropFilter:'blur(20px)', borderRight:'1px solid rgba(96,165,250,0.15)' }}
-              initial={{x:-240}} animate={{x:0}} exit={{x:-240}} transition={{type:'spring',damping:25}}>
+              initial={{x:-240}} animate={{x:0}} exit={{x:-240}} transition={{type:'tween',duration:0.18,ease:'easeOut'}}>
               <Inner close={() => setMob(false)}/>
             </motion.aside>
           </>
@@ -130,7 +131,7 @@ export default function Sidebar() {
       {/* Desktop */}
       <motion.aside
         animate={{ width: collapsed ? 64 : 215 }}
-        transition={{ type:'spring', damping:25, stiffness:180 }}
+        transition={{ type:'tween', duration:0.16, ease:'easeOut' }}
         className="hidden md:flex flex-col fixed left-0 top-0 bottom-0 z-30"
         style={{ background:'rgba(2,6,23,0.93)', backdropFilter:'blur(20px)', borderRight:'1px solid rgba(96,165,250,0.12)' }}
       >

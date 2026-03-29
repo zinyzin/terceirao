@@ -2,9 +2,9 @@ import { useEffect, useState } from 'react'
 import { Upload, Trash2, Images } from 'lucide-react'
 import axios from 'axios'
 import api from '../lib/api'
-import ForestBg from '../components/ForestBg'
-import PublicTabs from '../components/PublicTabs'
 import { useAuthStore } from '../store/auth'
+import { toast } from '../components/Toast'
+import { confirm } from '../components/ConfirmModal'
 
 export default function GalleryPage() {
   const { isAuth, can } = useAuthStore()
@@ -42,18 +42,18 @@ export default function GalleryPage() {
   }
 
   const handleDelete = async id => {
-    if (!confirm('Remover esta imagem da galeria?')) return
-    await api.delete(`/gallery/${id}`)
-    load()
+    if (!await confirm('Remover esta imagem da galeria?', 'Remover Imagem')) return
+    try {
+      await api.delete(`/gallery/${id}`)
+      toast.success('Imagem removida.')
+      load()
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Erro ao remover imagem')
+    }
   }
 
   return (
-    <div className="min-h-screen relative overflow-x-hidden">
-      <ForestBg/>
-      <main className="page-shell pt-10">
-        <div className="page-content max-w-6xl space-y-6">
-          <PublicTabs/>
-
+    <div className="space-y-6">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div>
               <h1 className="stitle flex items-center gap-2"><Images size={22}/>Galeria</h1>
@@ -89,8 +89,6 @@ export default function GalleryPage() {
               {!items.length && <div className="col-span-full text-center text-slate-400 py-10">Nenhuma imagem cadastrada.</div>}
             </div>
           )}
-        </div>
-      </main>
     </div>
   )
 }

@@ -6,6 +6,8 @@ import api from '../lib/api'
 import Modal from '../components/Modal'
 import axios from 'axios'
 import { useAuthStore } from '../store/auth'
+import { confirm } from '../components/ConfirmModal'
+import { toast } from '../components/Toast'
 
 const fmt = n => `R$ ${Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
 
@@ -67,13 +69,21 @@ export default function FinancePage() {
   }
 
   const reverse = async id => {
-    if (!confirm('Confirmar estorno?')) return
-    await api.post(`/finance/reverse/${id}`); load()
+    if (!await confirm('Confirmar o estorno desta transação?', 'Estornar')) return
+    try {
+      await api.post(`/finance/reverse/${id}`)
+      toast.success('Estorno realizado.')
+      load()
+    } catch (e) { toast.error(e.response?.data?.error || 'Erro ao estornar') }
   }
 
   const deleteEntry = async id => {
-    if (!confirm('ATENÇÃO: Deletar esta transação permanentemente?')) return
-    await api.delete(`/finance/ledger/${id}`); load()
+    if (!await confirm('Deletar esta transação permanentemente? Esta ação não pode ser desfeita.', 'Deletar Transação')) return
+    try {
+      await api.delete(`/finance/ledger/${id}`)
+      toast.success('Transação removida.')
+      load()
+    } catch (e) { toast.error(e.response?.data?.error || 'Erro ao deletar') }
   }
 
   return (
@@ -175,7 +185,40 @@ export default function FinancePage() {
           </div>
         </div>
         
-        <div className="overflow-x-auto">
+        {/* Mobile cards (< md) */}
+        <div className="md:hidden divide-y divide-white/5">
+          {ledger?.entries?.length === 0 && (
+            <p className="text-center text-slate-400 py-8 text-sm">Sem movimentações</p>
+          )}
+          {ledger?.entries?.map(e => (
+            <div key={e.id} className="p-4 flex items-start justify-between gap-3">
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={e.type==='CREDIT'?'badge badge-g':e.type==='DEBIT'?'badge badge-r':'badge badge-y'}>
+                    {e.type==='CREDIT'?'Entrada':e.type==='DEBIT'?'Saída':'Estorno'}
+                  </span>
+                  <span className="font-mono text-xs text-slate-500">{new Date(e.createdAt).toLocaleDateString('pt-BR')}</span>
+                </div>
+                <p className="text-sm text-slate-200 truncate">{e.description}</p>
+                {e.student?.name && <p className="text-xs text-slate-500 mt-0.5">{e.student.name}</p>}
+              </div>
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <span className={`font-mono text-sm font-bold ${e.type==='CREDIT'?'money-pos':'money-neg'}`}>
+                  {e.type==='CREDIT'?'+':'-'}{fmt(e.amount)}
+                </span>
+                {isAllowed && (
+                  <div className="flex gap-1">
+                    {e.type!=='REVERSAL' && <button onClick={()=>reverse(e.id)} className="text-slate-500 hover:text-yellow-400 p-1" title="Estornar"><RefreshCw size={12}/></button>}
+                    {isSuperadmin && <button onClick={()=>deleteEntry(e.id)} className="text-slate-500 hover:text-red-400 p-1" title="Deletar"><Trash2 size={12}/></button>}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Desktop table (>= md) */}
+        <div className="hidden md:block overflow-x-auto">
           <table className="tbl">
             <thead><tr><th>Data</th><th>Tipo</th><th>Descrição</th><th>Aluno</th><th>Valor</th>{isAllowed && <th>Ações</th>}</tr></thead>
             <tbody>
@@ -193,12 +236,8 @@ export default function FinancePage() {
                   {isAllowed && (
                     <td>
                       <div className="flex gap-2">
-                        {e.type!=='REVERSAL' && (
-                          <button onClick={()=>reverse(e.id)} className="text-green-800 hover:text-yellow-400 transition-colors" title="Estornar"><RefreshCw size={13}/></button>
-                        )}
-                        {isSuperadmin && (
-                          <button onClick={()=>deleteEntry(e.id)} className="text-green-800 hover:text-red-400 transition-colors" title="Deletar"><Trash2 size={13}/></button>
-                        )}
+                        {e.type!=='REVERSAL' && <button onClick={()=>reverse(e.id)} className="text-green-800 hover:text-yellow-400" title="Estornar"><RefreshCw size={13}/></button>}
+                        {isSuperadmin && <button onClick={()=>deleteEntry(e.id)} className="text-green-800 hover:text-red-400" title="Deletar"><Trash2 size={13}/></button>}
                       </div>
                     </td>
                   )}

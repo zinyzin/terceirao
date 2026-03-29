@@ -50,12 +50,9 @@ api.interceptors.response.use(
     
     // Handle any 401 error (not authenticated, invalid permissions, etc)
     if (err.response?.status === 401 && !orig._retry) {
-      // Check if user is still logged in
       const { isAuth } = useAuthStore.getState()
       if (isAuth) {
-        // Token is invalid or expired, logout and redirect
         useAuthStore.getState().logout()
-        alert('Sua sessão expirou. Faça login novamente.')
         window.location.href = '/'
       }
     }

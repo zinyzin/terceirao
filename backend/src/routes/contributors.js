@@ -29,13 +29,15 @@ router.post('/:id/donate', requirePermission('contributors:manage'), async (req,
     const c = await prisma.contributor.findUnique({ where: { id: req.params.id } });
     if (!c) throw new AppError('Contribuidor não encontrado', 404);
 
-    const donation = await prisma.donation.create({ data: { contributorId: c.id, amount, description } });
-
     let wallet = await prisma.wallet.findFirst();
     if (!wallet) wallet = await prisma.wallet.create({ data: {} });
-    await prisma.ledgerEntry.create({
-      data: { walletId: wallet.id, type: 'CREDIT', amount, description: `Doação de ${c.name}`, referenceId: donation.id, referenceType: 'DONATION' },
-    });
+
+    const [donation] = await prisma.$transaction([
+      prisma.donation.create({ data: { contributorId: c.id, amount, description } }),
+      prisma.ledgerEntry.create({
+        data: { walletId: wallet.id, type: 'CREDIT', amount, description: `Doação de ${c.name}`, referenceType: 'DONATION' },
+      }),
+    ]);
     res.status(201).json(donation);
   } catch (err) { next(err); }
 });
@@ -62,27 +64,24 @@ router.put('/:contributorId/donations/:donationId', requirePermission('contribut
     });
     if (!donation) throw new AppError('Doação não encontrada', 404);
     
-    // Update donation
-    const updated = await prisma.donation.update({
-      where: { id: req.params.donationId },
-      data: { amount, description }
-    });
-    
-    // Find and update related ledger entry
     const ledgerEntry = await prisma.ledgerEntry.findFirst({
       where: { referenceId: donation.id, referenceType: 'DONATION' }
     });
-    
+
+    const ops = [
+      prisma.donation.update({ where: { id: req.params.donationId }, data: { amount, description } }),
+    ];
     if (ledgerEntry) {
-      await prisma.ledgerEntry.update({
+      ops.push(prisma.ledgerEntry.update({
         where: { id: ledgerEntry.id },
-        data: { 
+        data: {
           amount,
-          description: `Doação de ${donation.contributor.name}${description ? ': ' + description : ''}`
-        }
-      });
+          description: `Doação de ${donation.contributor.name}${description ? ': ' + description : ''}`,
+        },
+      }));
     }
-    
+
+    const [updated] = await prisma.$transaction(ops);
     res.json(updated);
   } catch (err) { next(err); }
 });

@@ -1,10 +1,12 @@
 // src/pages/StudentsPage.jsx
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Search, Edit2, Trash2 } from 'lucide-react'
+import { Plus, Search, Edit2, Trash2, Users } from 'lucide-react'
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import { useAuthStore } from '../store/auth'
+import { toast } from '../components/Toast'
+import { confirm } from '../components/ConfirmModal'
 import axios from 'axios'
 
 const fmt = n => `R$ ${Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
@@ -15,9 +17,10 @@ export default function StudentsPage() {
   const [search, setSearch] = useState('')
   const [selected, setSelected] = useState(null)
   const [expandedId, setExpandedId] = useState(null)
-  const [modal, setModal] = useState(null) // 'create'|'edit'|'detail'
+  const [modal, setModal] = useState(null)
   const [editing, setEditing] = useState(null)
-  const [form, setForm] = useState({ name:'', description:'' })
+  const [form, setForm] = useState({ name:'', shortDescription:'', longDescription:'' })
+  const [fieldErrors, setFieldErrors] = useState({})
   const [photo, setPhoto] = useState(null)
   const { isAuth, can } = useAuthStore()
 
@@ -33,6 +36,8 @@ export default function StudentsPage() {
       }
       const { data } = await api.get('/students')
       setStudents(data)
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Erro ao carregar alunos')
     } finally {
       setLoading(false)
     }
@@ -43,27 +48,34 @@ export default function StudentsPage() {
 
   const handleSubmit = async e => {
     e.preventDefault()
+    const errs = {}
+    if (!form.name.trim()) errs.name = 'Nome é obrigatório'
+    if (Object.keys(errs).length) { setFieldErrors(errs); return }
+    setFieldErrors({})
     try {
       const fd = new FormData()
       fd.append('name', form.name)
-      fd.append('description', form.description)
+      fd.append('shortDescription', form.shortDescription)
+      fd.append('longDescription', form.longDescription)
       if (photo) fd.append('photo', photo)
       if (editing) await api.put(`/students/${editing.id}`, fd, { headers:{'Content-Type':'multipart/form-data'} })
       else await api.post('/students', fd, { headers:{'Content-Type':'multipart/form-data'} })
-      setModal(null); setEditing(null); setForm({name:'',description:''}); setPhoto(null); load()
+      setModal(null); setEditing(null); setForm({name:'',shortDescription:'',longDescription:''}); setPhoto(null); setFieldErrors({}); load()
+      toast.success(editing ? 'Aluno atualizado!' : 'Aluno criado!')
     } catch (e) {
       console.error('Erro ao salvar:', e)
-      alert(e.response?.data?.error || e.message || 'Erro ao salvar aluno')
+      toast.error(e.response?.data?.error || e.message || 'Erro ao salvar aluno')
     }
   }
 
   const handleDelete = async (id) => {
-    if (!confirm('Tem certeza que deseja excluir este aluno?')) return
+    if (!await confirm('Tem certeza que deseja excluir este aluno? Esta ação não pode ser desfeita.', 'Excluir Aluno')) return
     try {
       await api.delete(`/students/${id}`)
+      toast.success('Aluno excluído.')
       load()
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao excluir')
+      toast.error(e.response?.data?.error || 'Erro ao excluir aluno')
     }
   }
 
@@ -73,7 +85,7 @@ export default function StudentsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
         <h1 className="stitle">Alunos</h1>
-        {isAllowed && <button className="btn-g" onClick={()=>{setEditing(null);setForm({name:'',description:''});setPhoto(null);setModal('form')}}><Plus size={15}/>Novo Aluno</button>}
+        {isAllowed && <button className="btn-g" onClick={()=>{setEditing(null);setForm({name:'',shortDescription:'',longDescription:''});setPhoto(null);setModal('form')}}><Plus size={15}/>Novo Aluno</button>}
       </div>
 
       <div className="relative max-w-xs w-full">
@@ -82,91 +94,75 @@ export default function StudentsPage() {
       </div>
 
       {loading
-        ? <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">{[...Array(8)].map((_,i)=><div key={i} className="skel h-52 rounded-2xl"/>)}</div>
-        : (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
-            <AnimatePresence>
-              {filtered.map((s,i) => {
-                const isExpanded = expandedId === s.id
-                if (!isAllowed) {
-                  return (
-                    <motion.div key={s.id}
-                      initial={{opacity:0,scale:.92}} animate={{opacity:1,scale:1}} transition={{delay:i*.04}}
-                      className="glass p-4 cursor-pointer flex flex-col gap-3"
-                      onClick={()=>setExpandedId(isExpanded ? null : s.id)}
-                      layout
-                      whileHover={{scale:isExpanded?1:1.02,y:isExpanded?0:-2}}>
-                      <div className="flex flex-col items-center gap-2">
-                        {s.photo
-                          ? <img src={s.photo} alt={s.name} className="w-16 h-16 rounded-full object-cover border border-blue-300/20"/>
-                          : <div className="w-16 h-16 rounded-full bg-slate-900/50 border border-blue-300/20 flex items-center justify-center font-display text-xl font-bold text-blue-300">{s.name[0]}</div>
-                        }
-                        <p className="font-display text-xs font-bold text-blue-50 text-center leading-tight">{s.name}</p>
-                        {s.description && !isExpanded && <p className="text-xs text-slate-300 text-center line-clamp-2">{s.description}</p>}
-                        {isExpanded && s.description && (
-                          <motion.div
-                            initial={{opacity:0,height:0}}
-                            animate={{opacity:1,height:'auto'}}
-                            exit={{opacity:0,height:0}}
-                            transition={{duration:0.3}}
-                            className="w-full"
-                          >
-                            <p className="text-xs text-slate-300 text-center whitespace-pre-line mt-2">{s.description}</p>
-                          </motion.div>
-                        )}
-                      </div>
-                    </motion.div>
-                  )
-                }
-
-                const eng = s.totalDonated*0.5+(s.totalTickets||0)*2+(s.wins||0)*10
-                return (
-                  <motion.div key={s.id}
-                    initial={{opacity:0,scale:.92}} animate={{opacity:1,scale:1}} transition={{delay:i*.04}}
-                    className="glass p-4 cursor-pointer flex flex-col gap-3"
-                    onClick={()=>setExpandedId(isExpanded ? null : s.id)}
-                    layout
-                    whileHover={{scale:isExpanded?1:1.03,y:isExpanded?0:-3}}>
-                    <div className="flex justify-between items-start">
-                      <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${s.rank===1?'r1':s.rank===2?'r2':s.rank===3?'r3':'rx'}`}>{s.rank}</div>
-                      <div className="text-xs font-bold" style={{color:engColor(eng)}}>{eng>50?'🔥':eng>20?'⚡':eng>5?'✨':'💤'}</div>
-                    </div>
-                    <div className="flex flex-col items-center gap-2">
-                      {s.photo
-                        ? <img src={s.photo} alt={s.name} className="w-16 h-16 rounded-full object-cover border-2" style={{borderColor:engColor(eng)+'60'}}/>
-                        : <div className="w-16 h-16 rounded-full bg-slate-900/50 border-2 flex items-center justify-center font-display text-xl font-bold text-blue-300" style={{borderColor:engColor(eng)+'40'}}>{s.name[0]}</div>
-                      }
-                      <p className="font-display text-xs font-bold text-blue-50 text-center leading-tight">{s.name}</p>
-                      {isExpanded && s.description && (
-                        <motion.div
-                          initial={{opacity:0,height:0}}
-                          animate={{opacity:1,height:'auto'}}
-                          exit={{opacity:0,height:0}}
-                          transition={{duration:0.3}}
-                          className="w-full"
-                        >
-                          <p className="text-xs text-slate-300 text-center whitespace-pre-line mt-2 p-3 rounded-lg surface-muted">{s.description}</p>
-                        </motion.div>
+        ? <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">{[...Array(6)].map((_,i)=><div key={i} className="skel h-36 rounded-2xl"/>)}</div>
+        : filtered.length === 0
+          ? (
+            <div className="glass p-12 flex flex-col items-center justify-center text-center gap-3">
+              <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{background:'rgba(96,165,250,0.08)',border:'1px solid rgba(96,165,250,0.15)'}}>
+                <Users size={24} className="text-blue-400/50"/>
+              </div>
+              <p className="font-display text-blue-100/60 font-semibold">{search ? 'Nenhum aluno encontrado' : 'Nenhum aluno cadastrado'}</p>
+              <p className="text-xs text-slate-500">{search ? 'Tente outro termo de busca' : isAllowed ? 'Clique em "Novo Aluno" para começar' : 'Os alunos aparecerão aqui em breve'}</p>
+            </div>
+          )
+          : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filtered.map((s, i) => {
+              const isExpanded = expandedId === s.id
+              const eng = s.totalDonated*0.5+(s.totalTickets||0)*2+(s.wins||0)*10
+              return (
+                <motion.div
+                  key={s.id}
+                  initial={{ opacity:0, y:16 }}
+                  animate={{ opacity:1, y:0 }}
+                  transition={{ delay: i * 0.05 }}
+                  className="glass glass-card p-5"
+                  onClick={() => setExpandedId(isExpanded ? null : s.id)}
+                  layout
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="font-display font-bold text-blue-50 text-sm">{s.name}</p>
+                      {isAllowed && (
+                        <div className="flex gap-3 mt-1 text-xs">
+                          <span className="money-pos font-mono">{fmt(s.totalDonated)}</span>
+                          <span className="text-slate-400">·</span>
+                          <span className="text-sky-300">{s.totalTickets} tickets</span>
+                        </div>
                       )}
                     </div>
-                    <div className="space-y-0.5">
-                      <div className="flex justify-between text-xs"><span className="text-slate-400">Contribuído</span><span className="money-pos font-mono">{fmt(s.totalDonated)}</span></div>
-                      <div className="flex justify-between text-xs"><span className="text-slate-400">Tickets</span><span className="text-sky-300">{s.totalTickets}</span></div>
+                    <div className="w-12 h-12 rounded-xl bg-slate-900/50 border border-blue-300/20 flex items-center justify-center text-blue-300 font-display font-black flex-shrink-0">
+                      {s.photo
+                        ? <img src={s.photo} alt={s.name} className="w-full h-full rounded-xl object-cover"/>
+                        : s.name[0]
+                      }
                     </div>
-                    {isExpanded && isAllowed && (
-                      <motion.button
-                        initial={{opacity:0}}
-                        animate={{opacity:1}}
-                        className="btn-ghost text-xs w-full justify-center mt-2"
-                        onClick={(e)=>{e.stopPropagation();setSelected(s);setModal('detail')}}
-                      >
-                        Ver Detalhes Completos
-                      </motion.button>
-                    )}
-                  </motion.div>
-                )
-              })}
-            </AnimatePresence>
+                  </div>
+
+                  {!isExpanded && <p className="text-xs text-slate-300 mt-3 line-clamp-3">{s.shortDescription || s.longDescription || '—'}</p>}
+
+                  {isExpanded && (
+                    <motion.div
+                      initial={{opacity:0,height:0}}
+                      animate={{opacity:1,height:'auto'}}
+                      exit={{opacity:0,height:0}}
+                      transition={{duration:0.3}}
+                      className="mt-3 space-y-3"
+                    >
+                      {s.longDescription && <p className="text-xs text-slate-300 whitespace-pre-line">{s.longDescription}</p>}
+                      {isAllowed && (
+                        <button
+                          className="btn-ghost text-xs w-full justify-center"
+                          onClick={(e)=>{e.stopPropagation();setSelected(s);setModal('detail')}}
+                        >
+                          Editar Aluno
+                        </button>
+                      )}
+                    </motion.div>
+                  )}
+                </motion.div>
+              )
+            })}
           </div>
         )
       }
@@ -174,46 +170,21 @@ export default function StudentsPage() {
       {/* Detail modal */}
       <Modal open={modal==='detail'} onClose={()=>setModal(null)} title="">
         {selected && (
-          (!isAllowed ? (
-            <div>
-              <div className="flex justify-center mb-4">
-                {selected.photo
-                  ? <img src={selected.photo} className="w-40 h-40 rounded-2xl object-cover border border-blue-300/30"/>
-                  : <div className="w-40 h-40 rounded-2xl bg-slate-900/50 flex items-center justify-center font-display text-5xl font-bold text-blue-300">{selected.name[0]}</div>
-                }
-              </div>
-              <h2 className="font-display text-xl font-bold text-blue-50 text-center">{selected.name}</h2>
-              {selected.description && <p className="text-slate-300 text-sm text-center mt-3 whitespace-pre-line">{selected.description}</p>}
-
-              {selected.graduationQuote && (
-                <div className="mt-5 p-4 rounded-xl surface-muted">
-                  <p className="text-xs text-sky-200/70 uppercase tracking-wider mb-2">Frase de Formatura</p>
-                  <p className="text-sm text-blue-100">“{selected.graduationQuote}”</p>
-                </div>
-              )}
-
-              {(selected.socials?.instagram || selected.socials?.tiktok || selected.socials?.x) && (
-                <div className="mt-4">
-                  <p className="text-xs text-sky-200/70 uppercase tracking-wider mb-2">Redes sociais</p>
-                  <div className="flex flex-col gap-2">
-                    {selected.socials?.instagram && <a className="btn-ghost justify-center" href={selected.socials.instagram} target="_blank" rel="noreferrer">Instagram</a>}
-                    {selected.socials?.tiktok && <a className="btn-ghost justify-center" href={selected.socials.tiktok} target="_blank" rel="noreferrer">TikTok</a>}
-                    {selected.socials?.x && <a className="btn-ghost justify-center" href={selected.socials.x} target="_blank" rel="noreferrer">X</a>}
-                  </div>
-                </div>
-              )}
+          <div>
+            <div className="flex justify-center mb-4">
+              {selected.photo
+                ? <img src={selected.photo} className="w-40 h-40 rounded-2xl object-cover border border-blue-300/30"/>
+                : <div className="w-40 h-40 rounded-2xl bg-slate-900/50 flex items-center justify-center font-display text-5xl font-bold text-blue-300">{selected.name[0]}</div>
+              }
             </div>
-          ) : (
-            <div>
-              <div className="flex justify-center mb-4">
-                {selected.photo
-                  ? <img src={selected.photo} className="w-28 h-28 rounded-full object-cover border-2 border-blue-300/30"/>
-                  : <div className="w-28 h-28 rounded-full bg-slate-900/50 flex items-center justify-center font-display text-4xl font-bold text-blue-300">{selected.name[0]}</div>
-                }
-              </div>
-              <h2 className="font-display text-xl font-bold text-blue-50 text-center">{selected.name}</h2>
-              {selected.description && <p className="text-slate-300 text-sm text-center mt-2">{selected.description}</p>}
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-5">
+            <h2 className="font-display text-xl font-bold text-blue-50 text-center">{selected.name}</h2>
+
+            {selected.shortDescription && (
+              <p className="text-slate-300 text-sm text-center mt-2">{selected.shortDescription}</p>
+            )}
+
+            {isAllowed && (
+              <div className="grid grid-cols-3 gap-3 mt-5">
                 {[{l:'Ranking',v:`#${selected.rank}`,c:'#ffcc00'},{l:'Contribuído',v:fmt(selected.totalDonated),c:'#00ff88'},{l:'Vitórias',v:selected.wins,c:'#ff9900'}].map(x=>(
                   <div key={x.l} className="text-center p-3 rounded-xl surface-muted">
                     <p className="text-xs text-slate-400 mb-1">{x.l}</p>
@@ -221,29 +192,43 @@ export default function StudentsPage() {
                   </div>
                 ))}
               </div>
-              {isAllowed && (
-                <button className="btn-g w-full justify-center mt-5" onClick={()=>{setEditing(selected);setForm({name:selected.name,description:selected.description||''});setModal('form')}}>
-                  <Edit2 size={14}/> Editar
-                </button>
-              )}
-              {isAllowed && (
-                <button className="btn-danger w-full justify-center mt-2" onClick={()=>{handleDelete(selected.id);setModal(null)}}>
-                  <Trash2 size={14}/> Excluir
-                </button>
-              )}
-              <button className="btn-ghost w-full justify-center mt-2" onClick={()=>setModal(null)}>
-                Fechar
+            )}
+
+            {selected.longDescription && (
+              <p className="text-slate-300 text-sm mt-4 whitespace-pre-line">{selected.longDescription}</p>
+            )}
+
+            {isAllowed && (
+              <button className="btn-g w-full justify-center mt-5" onClick={()=>{setEditing(selected);setForm({name:selected.name,shortDescription:selected.shortDescription||'',longDescription:selected.longDescription||''});setModal('form')}}>
+                <Edit2 size={14}/> Editar
               </button>
-            </div>
-          ))
+            )}
+            {isAllowed && (
+              <button className="btn-danger w-full justify-center mt-2" onClick={()=>{handleDelete(selected.id);setModal(null)}}>
+                <Trash2 size={14}/> Excluir
+              </button>
+            )}
+            <button className="btn-ghost w-full justify-center mt-2" onClick={()=>setModal(null)}>
+              Fechar
+            </button>
+          </div>
         )}
       </Modal>
 
       {/* Form modal */}
       <Modal open={modal==='form'} onClose={()=>setModal(null)} title={editing?'Editar Aluno':'Novo Aluno'}>
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div><label className="lbl">Nome *</label><input className="inp" value={form.name} onChange={e=>setForm({...form,name:e.target.value})} required/></div>
-          <div><label className="lbl">Descrição</label><textarea className="inp" rows={3} value={form.description} onChange={e=>setForm({...form,description:e.target.value})}/></div>
+          <div>
+            <label className="lbl">Nome *</label>
+            <input
+              className={`inp ${fieldErrors.name ? 'border-red-500/60 focus:border-red-500' : ''}`}
+              value={form.name}
+              onChange={e=>{setForm({...form,name:e.target.value});setFieldErrors(p=>({...p,name:undefined}))}}
+            />
+            {fieldErrors.name && <p className="text-xs text-red-400 mt-1">{fieldErrors.name}</p>}
+          </div>
+          <div><label className="lbl">Descrição Curta</label><textarea className="inp" rows={2} placeholder="Frase de apresentação..." value={form.shortDescription} onChange={e=>setForm({...form,shortDescription:e.target.value})}/></div>
+          <div><label className="lbl">Biografia Completa</label><textarea className="inp" rows={4} placeholder="Conte mais sobre o aluno..." value={form.longDescription} onChange={e=>setForm({...form,longDescription:e.target.value})}/></div>
           <div><label className="lbl">Foto</label><input type="file" accept="image/*" className="inp" onChange={e=>setPhoto(e.target.files[0])}/></div>
           <div className="flex gap-3 pt-2">
             <button type="button" onClick={()=>setModal(null)} className="btn-danger flex-1 justify-center">Cancelar</button>

@@ -1,19 +1,22 @@
 // src/pages/HomePage.jsx
 import { motion, AnimatePresence } from 'framer-motion'
 import { Link, useNavigate } from 'react-router-dom'
-import { Users, GraduationCap, DollarSign, Ticket, Trophy, LogIn, Eye, EyeOff, X } from 'lucide-react'
+import { Users, GraduationCap, DollarSign, Ticket, Trophy, LogIn, Eye, EyeOff, X, TrendingUp } from 'lucide-react'
 import ForestBg from '../components/ForestBg'
 import { useAuthStore } from '../store/auth'
 import api from '../lib/api'
-import { useState } from 'react'
+import axios from 'axios'
+import { useState, useEffect } from 'react'
 
 const CARDS = [
-  { to: '/alunos', title: 'Alunos', desc: 'Conheça a turma', icon: Users, color: '#60a5fa' },
-  { to: '/professores', title: 'Professores', desc: 'Homenagens e história', icon: GraduationCap, color: '#38bdf8' },
-  { to: '/financeiro', title: 'Financeiro', desc: 'Meta e arrecadação', icon: DollarSign, color: '#93c5fd' },
-  { to: '/rifas', title: 'Rifas', desc: 'Prêmios e participantes', icon: Ticket, color: '#7dd3fc' },
-  { to: '/contribuidores', title: 'Contribuidores', desc: 'Ranking gamificado', icon: Trophy, color: '#a78bfa' },
+  { to: '/alunos', title: 'Alunos', icon: Users, color: '#60a5fa' },
+  { to: '/professores', title: 'Professores', icon: GraduationCap, color: '#38bdf8' },
+  { to: '/financeiro', title: 'Financeiro', icon: DollarSign, color: '#93c5fd' },
+  { to: '/rifas', title: 'Rifas', icon: Ticket, color: '#7dd3fc' },
+  { to: '/contribuidores', title: 'Contribuidores', icon: Trophy, color: '#a78bfa' },
 ]
+
+const fmt = n => `R$ ${Number(n||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}`
 
 export default function HomePage() {
   const { isAuth, user, logout, setAuth } = useAuthStore()
@@ -23,6 +26,11 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false)
   const [err, setErr] = useState('')
   const [form, setForm] = useState({ username: '', password: '' })
+  const [info, setInfo] = useState(null)
+
+  useEffect(() => {
+    axios.get('/api/public/info').then(r => setInfo(r.data)).catch(() => {})
+  }, [])
 
   const handleLogin = async e => {
     e.preventDefault()
@@ -58,13 +66,54 @@ export default function HomePage() {
       <main className="page-shell pt-10">
         <div className="page-content max-w-5xl">
           <section className="glass hero-glow text-center px-6 py-10 md:py-12">
-            <p className="text-[11px] uppercase tracking-[0.28em] text-blue-200/70 mb-3">Formatura 2026</p>
+            <p className="text-[11px] uppercase tracking-[0.28em] text-blue-200/70 mb-3">
+              {info?.siteDescription || 'Formatura 2026'}
+            </p>
             <h1 className="font-display font-black text-4xl md:text-6xl text-blue-50 leading-tight mb-4">
               Turma <span className="text-sky-300">Pantera</span>
             </h1>
             <p className="text-slate-300 text-base md:text-lg mt-3 max-w-2xl mx-auto leading-relaxed">
               Acompanhe nossa jornada rumo à formatura. Explore rifas, contribuições, galeria de fotos e muito mais.
             </p>
+
+            {/* Live stats */}
+            {info && (
+              <div className="flex flex-wrap justify-center gap-4 mt-6">
+                <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-300/15 rounded-full px-4 py-1.5">
+                  <Users size={13} className="text-sky-300"/>
+                  <span className="text-sm text-slate-300">
+                    <span className="font-bold text-blue-100">{info.studentCount}</span> alunos
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 bg-blue-500/10 border border-blue-300/15 rounded-full px-4 py-1.5">
+                  <TrendingUp size={13} className="text-sky-300"/>
+                  <span className="text-sm text-slate-300">
+                    <span className="font-bold text-blue-100">{fmt(info.totalRaised)}</span> arrecadados
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Progress bar */}
+            {info && info.goalAmount > 0 && (
+              <div className="mt-6 max-w-sm mx-auto">
+                <div className="flex justify-between text-xs text-slate-400 mb-1.5">
+                  <span>Meta: {fmt(info.goalAmount)}</span>
+                  <span className="text-sky-300 font-semibold">
+                    {Math.min(100, Math.round((info.totalRaised / info.goalAmount) * 100))}%
+                  </span>
+                </div>
+                <div className="w-full h-2 rounded-full bg-white/5 border border-white/10 overflow-hidden">
+                  <motion.div
+                    className="h-full rounded-full"
+                    style={{ background: 'linear-gradient(90deg, #3b82f6, #38bdf8)' }}
+                    initial={{ width: 0 }}
+                    animate={{ width: `${Math.min(100, (info.totalRaised / info.goalAmount) * 100)}%` }}
+                    transition={{ duration: 1.2, ease: 'easeOut', delay: 0.3 }}
+                  />
+                </div>
+              </div>
+            )}
           </section>
 
           {isAuth && (
@@ -100,10 +149,7 @@ export default function HomePage() {
                   <div className="absolute inset-0 opacity-70" style={{ background:`linear-gradient(180deg, ${c.color}20, transparent)` }}/>
                   <div className="relative flex flex-col items-center gap-3">
                     <c.icon size={32} style={{ color: c.color }} className="flex-shrink-0" />
-                    <div>
-                      <p className="font-display font-bold text-blue-50 text-sm mb-1">{c.title}</p>
-                      <p className="text-xs text-slate-300 leading-tight">{c.desc}</p>
-                    </div>
+                    <p className="font-display font-bold text-blue-50 text-sm">{c.title}</p>
                   </div>
                 </Link>
               </motion.div>

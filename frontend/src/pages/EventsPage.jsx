@@ -5,6 +5,8 @@ import { Plus, Calendar, Clock, MapPin, Edit2, Trash2, X, ChevronLeft, ChevronRi
 import api from '../lib/api'
 import Modal from '../components/Modal'
 import { useAuthStore } from '../store/auth'
+import { toast } from '../components/Toast'
+import { confirm } from '../components/ConfirmModal'
 
 const typeColors = {
   GENERAL: '#60a5fa',
@@ -56,7 +58,7 @@ export default function EventsPage() {
       })
       setEvents(data)
     } catch (e) {
-      console.error('Erro ao carregar eventos:', e)
+      toast.error(e.response?.data?.error || 'Erro ao carregar eventos')
     } finally {
       setLoading(false)
     }
@@ -84,17 +86,18 @@ export default function EventsPage() {
       setForm({ title: '', description: '', startDate: '', endDate: '', location: '', type: 'GENERAL' })
       load()
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao salvar evento')
+      toast.error(e.response?.data?.error || 'Erro ao salvar evento')
     }
   }
 
   const handleDelete = async id => {
-    if (!confirm('Tem certeza que deseja excluir este evento?')) return
+    if (!await confirm('Tem certeza que deseja excluir este evento?', 'Excluir Evento')) return
     try {
       await api.delete(`/events/${id}`)
+      toast.success('Evento excluído.')
       load()
     } catch (e) {
-      alert(e.response?.data?.error || 'Erro ao excluir')
+      toast.error(e.response?.data?.error || 'Erro ao excluir evento')
     }
   }
 
@@ -192,7 +195,7 @@ export default function EventsPage() {
                           key={event.id}
                           className="w-full text-left text-xs p-1 rounded truncate transition-colors hover:opacity-80"
                           style={{ backgroundColor: `${typeColors[event.type]}30`, borderLeft: `3px solid ${typeColors[event.type]}` }}
-                          onClick={() => isAllowed ? openEdit(event) : alert(`${event.title}\n\n${event.description || ''}`)}
+                          onClick={() => isAllowed ? openEdit(event) : toast.info(`${event.title}${event.description ? ': ' + event.description : ''}`)}
                           title={event.title}
                         >
                           {event.title}

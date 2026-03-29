@@ -34,7 +34,7 @@ router.get('/financial', requireAdmin, async (req, res, next) => {
       }),
       prisma.student.findMany({
         where: { isActive: true },
-        select: { name: true, totalDonated: true, _count: { select: { donations: true } } }
+        select: { name: true, _count: { select: { donations: true } }, donations: { select: { amount: true } } },
       }),
       prisma.contributor.findMany({
         include: { donations: { select: { amount: true } } }
@@ -94,7 +94,8 @@ router.get('/financial', requireAdmin, async (req, res, next) => {
     doc.moveDown();
     
     const topStudents = students
-      .sort((a, b) => parseFloat(b.totalDonated) - parseFloat(a.totalDonated))
+      .map(s => ({ ...s, totalDonated: s.donations.reduce((acc, d) => acc + parseFloat(d.amount), 0) }))
+      .sort((a, b) => b.totalDonated - a.totalDonated)
       .slice(0, 10);
 
     topStudents.forEach((s, i) => {
@@ -129,15 +130,17 @@ router.get('/financial', requireAdmin, async (req, res, next) => {
 // GET /api/reports/students - Generate students PDF report
 router.get('/students', requireAdmin, async (req, res, next) => {
   try {
-    const students = await prisma.student.findMany({
+    const studentsRaw = await prisma.student.findMany({
       where: { isActive: true },
       include: {
         donations: true,
         raffleParticipants: { include: { raffle: { select: { title: true } } } },
-        raffleWins: { include: { raffle: { select: { title: true } } } }
+        raffleWins: { include: { raffle: { select: { title: true } } } },
       },
-      orderBy: { totalDonated: 'desc' }
     });
+    const students = studentsRaw
+      .map(s => ({ ...s, totalDonated: s.donations.reduce((acc, d) => acc + parseFloat(d.amount), 0) }))
+      .sort((a, b) => b.totalDonated - a.totalDonated);
 
     const doc = new PDFDocument({ margin: 50 });
     
