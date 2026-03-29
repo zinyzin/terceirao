@@ -3,8 +3,12 @@ const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 
 if (process.env.NODE_ENV === 'production') {
-  if (!process.env.JWT_ACCESS_SECRET || !process.env.JWT_REFRESH_SECRET) {
-    throw new Error('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must be set in production');
+  const missing = [];
+  if (!process.env.JWT_ACCESS_SECRET) missing.push('JWT_ACCESS_SECRET');
+  if (!process.env.JWT_REFRESH_SECRET) missing.push('JWT_REFRESH_SECRET');
+  if (missing.length) {
+    console.error('Missing env vars:', missing.join(', '));
+    throw new Error(`${missing.join(' and ')} must be set in production`);
   }
 }
 
