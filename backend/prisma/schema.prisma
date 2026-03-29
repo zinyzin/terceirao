@@ -23,6 +23,7 @@ model User {
   sessions      Session[]
   auditLogs     AuditLog[]
   galleryItems  GalleryItem[]
+  events        Event[]
 }
 
 model Session {
