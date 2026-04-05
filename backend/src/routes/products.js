@@ -50,6 +50,11 @@ router.post('/:id/sell', requirePermission('finance:detail'), async (req, res, n
 
 router.delete('/:id', requirePermission('finance:detail'), async (req, res, next) => {
   try {
+    const sales = await prisma.sale.findMany({ where: { productId: req.params.id }, select: { id: true } });
+    const saleIds = sales.map(s => s.id);
+    if (saleIds.length) {
+      await prisma.ledgerEntry.deleteMany({ where: { referenceId: { in: saleIds }, referenceType: 'PRODUCT' } });
+    }
     await prisma.sale.deleteMany({ where: { productId: req.params.id } });
     await prisma.product.update({ where: { id: req.params.id }, data: { isActive: false } });
     res.json({ message: 'Produto excluído' });

@@ -31,14 +31,19 @@ export default function GalleryPage() {
   const handleUpload = async e => {
     e.preventDefault()
     if (!file) return
-    const fd = new FormData()
-    fd.append('image', file)
-    fd.append('title', title)
-    fd.append('category', 'general')
-    await api.post('/gallery', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
-    setFile(null)
-    setTitle('')
-    load()
+    try {
+      const fd = new FormData()
+      fd.append('image', file)
+      fd.append('title', title)
+      fd.append('category', 'general')
+      await api.post('/gallery', fd, { headers: { 'Content-Type': 'multipart/form-data' } })
+      setFile(null)
+      setTitle('')
+      toast.success('Imagem enviada!')
+      load()
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Erro ao enviar imagem')
+    }
   }
 
   const handleDelete = async id => {
