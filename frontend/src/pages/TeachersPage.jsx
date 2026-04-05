@@ -1,7 +1,7 @@
 // src/pages/TeachersPage.jsx
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Edit2, Search, Trash2, Crown, GraduationCap } from 'lucide-react'
+import { Plus, Edit2, Search, Trash2, Crown, GraduationCap, Palette } from 'lucide-react'
 import Modal from '../components/Modal'
 import { useAuthStore } from '../store/auth'
 import { toast } from '../components/Toast'
@@ -24,6 +24,12 @@ export default function TeachersPage() {
   const [form, setForm] = useState({ name:'', subject:'', shortDescription:'', longDescription:'', catchphrase:'' })
   const [fieldErrors, setFieldErrors] = useState({})
   const [photo, setPhoto] = useState(null)
+  const [counselorColor, setCounselorColor] = useState('#ffd700')
+
+  const PRESET_COLORS = [
+    '#ffd700', '#ff6b6b', '#48bb78', '#4299e1', '#ed64a6',
+    '#ecc94b', '#38b2ac', '#9f7aea', '#ed8936', '#667eea',
+  ]
 
   const load = async () => {
     setLoading(true)
@@ -44,9 +50,9 @@ export default function TeachersPage() {
 
   useEffect(() => { load() }, [isAllowed])
 
-  const setCounselor = async (id) => {
+  const setCounselor = async (id, color) => {
     try {
-      await api.patch(`/teachers/${id}/counselor`)
+      await api.patch(`/teachers/${id}/counselor`, { color: color || counselorColor })
       toast.success('Professor Conselheiro definido!')
       load()
     } catch (e) {
@@ -54,8 +60,23 @@ export default function TeachersPage() {
     }
   }
 
+  const updateCounselorColor = async (id, color) => {
+    try {
+      await api.patch(`/teachers/${id}/counselor-color`, { color })
+      setCounselorColor(color)
+      toast.success('Cor atualizada!')
+      load()
+    } catch (e) {
+      toast.error(e.response?.data?.error || 'Erro ao atualizar cor')
+    }
+  }
+
   const counselor = teachers.find(t => t.isCounselor)
+  const cColor = counselor?.counselorColor || '#ffd700'
   const filtered = teachers.filter(t => !t.isCounselor && t.name.toLowerCase().includes(search.toLowerCase()))
+
+  // Sync counselorColor state when counselor loads
+  useEffect(() => { if (counselor?.counselorColor) setCounselorColor(counselor.counselorColor) }, [counselor?.counselorColor])
 
   const handleSubmit = async e => {
     e.preventDefault()
@@ -113,56 +134,77 @@ export default function TeachersPage() {
               animate={{ opacity:1, y:0 }}
               className="relative overflow-hidden rounded-2xl p-6 sm:p-8 cursor-pointer"
               style={{
-                background: 'linear-gradient(135deg, rgba(30,20,5,0.85) 0%, rgba(10,8,2,0.9) 100%)',
-                border: '1px solid rgba(255,204,0,0.4)',
-                boxShadow: '0 0 60px rgba(255,180,0,0.12), 0 20px 60px rgba(0,0,0,0.6)'
+                background: `linear-gradient(135deg, ${cColor}12 0%, rgba(10,8,2,0.9) 100%)`,
+                border: `1px solid ${cColor}66`,
+                boxShadow: `0 0 60px ${cColor}1a, 0 20px 60px rgba(0,0,0,0.6)`
               }}
               onClick={() => { setSelected(counselor); setModal('detail') }}
             >
-              {/* Gold shimmer accent */}
-              <div className="absolute inset-0 pointer-events-none" style={{ background: 'radial-gradient(ellipse 70% 40% at 50% 0%, rgba(255,200,0,0.08) 0%, transparent 70%)' }}/>
+              {/* Shimmer accent */}
+              <div className="absolute inset-0 pointer-events-none" style={{ background: `radial-gradient(ellipse 70% 40% at 50% 0%, ${cColor}14 0%, transparent 70%)` }}/>
 
               <div className="relative flex flex-col items-center text-center gap-4">
                 {/* Crown */}
                 <motion.div
                   animate={{ y: [0, -5, 0] }}
                   transition={{ duration: 3, repeat: Infinity, ease: 'easeInOut' }}
-                  className="text-yellow-400"
+                  style={{ color: cColor }}
                 >
                   <Crown size={32} fill="currentColor"/>
                 </motion.div>
 
                 {/* Photo */}
                 <div className="relative">
-                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden border-2 border-yellow-400/50"
-                    style={{ boxShadow: '0 0 30px rgba(255,200,0,0.25)' }}>
+                  <div className="w-28 h-28 sm:w-36 sm:h-36 rounded-full overflow-hidden border-2"
+                    style={{ borderColor: `${cColor}80`, boxShadow: `0 0 30px ${cColor}40` }}>
                     {counselor.photo
                       ? <img src={counselor.photo} alt={counselor.name} className="w-full h-full object-cover"/>
-                      : <div className="w-full h-full bg-slate-900/50 flex items-center justify-center font-display text-4xl font-bold text-yellow-300">{counselor.name[0]}</div>
+                      : <div className="w-full h-full bg-slate-900/50 flex items-center justify-center font-display text-4xl font-bold" style={{color: cColor}}>{counselor.name[0]}</div>
                     }
                   </div>
                 </div>
 
                 {/* Badge + Name */}
                 <div className="space-y-1">
-                  <span className="inline-flex items-center gap-1.5 text-xs font-bold text-yellow-400 tracking-wider uppercase bg-yellow-400/10 border border-yellow-400/25 px-3 py-1 rounded-full">
+                  <span className="inline-flex items-center gap-1.5 text-xs font-bold tracking-wider uppercase px-3 py-1 rounded-full"
+                    style={{ color: cColor, background: `${cColor}18`, border: `1px solid ${cColor}40` }}>
                     Professor Conselheiro
                   </span>
-                  <h2 className="font-display text-2xl sm:text-3xl font-black text-yellow-50">{counselor.name}</h2>
-                  {counselor.subject && <p className="text-sm text-yellow-200/60">Matéria: {counselor.subject}</p>}
+                  <h2 className="font-display text-2xl sm:text-3xl font-black text-blue-50">{counselor.name}</h2>
+                  {counselor.subject && <p className="text-sm text-slate-400">Matéria: {counselor.subject}</p>}
                 </div>
 
                 {/* Catchphrase */}
                 {counselor.catchphrase && (
                   <div className="max-w-lg">
-                    <p className="text-base sm:text-lg text-yellow-100/90 italic font-medium leading-relaxed">
-                      “{counselor.catchphrase}”
+                    <p className="text-base sm:text-lg text-slate-200/90 italic font-medium leading-relaxed">
+                      "{counselor.catchphrase}"
                     </p>
                   </div>
                 )}
 
                 {counselor.shortDescription && (
                   <p className="text-sm text-slate-300 max-w-md">{counselor.shortDescription}</p>
+                )}
+
+                {/* Color picker for superadmin */}
+                {isSuperadmin && (
+                  <div className="flex items-center gap-2 mt-2" onClick={e => e.stopPropagation()}>
+                    <Palette size={13} className="text-slate-400"/>
+                    {PRESET_COLORS.map(c => (
+                      <button
+                        key={c}
+                        className="w-5 h-5 rounded-full transition-transform hover:scale-125"
+                        style={{
+                          background: c,
+                          border: c === cColor ? '2px solid white' : '2px solid transparent',
+                          boxShadow: c === cColor ? `0 0 8px ${c}80` : 'none',
+                        }}
+                        onClick={() => updateCounselorColor(counselor.id, c)}
+                        title={`Cor: ${c}`}
+                      />
+                    ))}
+                  </div>
                 )}
               </div>
             </motion.div>
@@ -247,7 +289,11 @@ export default function TeachersPage() {
 
                 <h2 className="font-display text-xl font-bold text-blue-50 text-center">{selected.name}</h2>
                 <p className="text-xs text-slate-300 text-center mt-2">Matéria: <span className="text-sky-300">{selected.subject || '—'}</span></p>
-                {selected.isCounselor && <p className="text-xs text-yellow-400 text-center mt-1 font-semibold">⭐ Professor Conselheiro</p>}
+                {selected.isCounselor && (
+                  <p className="text-xs text-center mt-1 font-semibold" style={{color: selected.counselorColor || '#ffd700'}}>
+                    ⭐ Professor Conselheiro
+                  </p>
+                )}
 
                 {selected.catchphrase && (
                   <div className="mt-5 p-4 rounded-xl surface-muted">
@@ -259,13 +305,49 @@ export default function TeachersPage() {
                 {selected.longDescription && <p className="text-slate-300 text-sm mt-4 whitespace-pre-line">{selected.longDescription}</p>}
 
                 {isSuperadmin && !selected.isCounselor && (
-                  <button
-                    className="w-full justify-center mt-5 flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
-                    style={{ background:'rgba(255,200,0,0.12)', border:'1px solid rgba(255,200,0,0.35)', color:'#fde68a' }}
-                    onClick={()=>{ setCounselor(selected.id); setModal(null) }}
-                  >
-                    <Crown size={15} fill="currentColor"/> Definir como Conselheiro
-                  </button>
+                  <div className="mt-5 space-y-3">
+                    <p className="text-xs text-slate-400 text-center">Escolha a cor do conselheiro:</p>
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      {PRESET_COLORS.map(c => (
+                        <button
+                          key={c}
+                          className="w-6 h-6 rounded-full transition-transform hover:scale-125"
+                          style={{
+                            background: c,
+                            border: c === counselorColor ? '2px solid white' : '2px solid transparent',
+                            boxShadow: c === counselorColor ? `0 0 8px ${c}80` : 'none',
+                          }}
+                          onClick={() => setCounselorColor(c)}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      className="w-full justify-center flex items-center gap-2 px-4 py-2.5 rounded-xl font-semibold text-sm transition-all"
+                      style={{ background:`${counselorColor}18`, border:`1px solid ${counselorColor}55`, color: counselorColor }}
+                      onClick={()=>{ setCounselor(selected.id, counselorColor); setModal(null) }}
+                    >
+                      <Crown size={15} fill="currentColor"/> Definir como Conselheiro
+                    </button>
+                  </div>
+                )}
+                {isSuperadmin && selected.isCounselor && (
+                  <div className="mt-5 space-y-2">
+                    <p className="text-xs text-slate-400 text-center">Alterar cor do conselheiro:</p>
+                    <div className="flex items-center justify-center gap-2 flex-wrap">
+                      {PRESET_COLORS.map(c => (
+                        <button
+                          key={c}
+                          className="w-6 h-6 rounded-full transition-transform hover:scale-125"
+                          style={{
+                            background: c,
+                            border: c === (selected.counselorColor || '#ffd700') ? '2px solid white' : '2px solid transparent',
+                            boxShadow: c === (selected.counselorColor || '#ffd700') ? `0 0 8px ${c}80` : 'none',
+                          }}
+                          onClick={() => updateCounselorColor(selected.id, c)}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 )}
                 {isAllowed && (
                   <button className="btn-g w-full justify-center mt-3" onClick={()=>{setEditing(selected);setForm({name:selected.name,subject:selected.subject||'',shortDescription:selected.shortDescription||'',longDescription:selected.longDescription||'',catchphrase:selected.catchphrase||''});setModal('form')}}>

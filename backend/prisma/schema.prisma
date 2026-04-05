@@ -64,6 +64,7 @@ model Teacher {
   longDescription  String?
   catchphrase      String?
   isCounselor      Boolean  @default(false)
+  counselorColor   String?
   isActive         Boolean  @default(true)
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

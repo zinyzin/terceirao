@@ -191,6 +191,39 @@ router.get('/ledger', async (req, res, next) => {
 
 
 
+// GET /api/public/teachers — public teacher listing
+router.get('/teachers', async (req, res, next) => {
+  try {
+    const teachers = await prisma.teacher.findMany({
+      where: { isActive: true },
+      select: {
+        id: true, name: true, subject: true, photo: true,
+        shortDescription: true, longDescription: true, catchphrase: true,
+        isCounselor: true, counselorColor: true,
+      },
+      orderBy: [{ isCounselor: 'desc' }, { name: 'asc' }],
+    });
+    res.json(teachers);
+  } catch (err) {
+    if (isMissingTableError(err)) { res.json([]); return; }
+    next(err);
+  }
+});
+
+// GET /api/public/gallery — public gallery
+router.get('/gallery', async (req, res, next) => {
+  try {
+    const items = await prisma.galleryItem.findMany({
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, title: true, imageUrl: true, createdAt: true },
+    });
+    res.json(items);
+  } catch (err) {
+    if (isMissingTableError(err)) { res.json([]); return; }
+    next(err);
+  }
+});
+
 // GET /api/public/students — public student listing (no financial data)
 
 router.get('/students', async (req, res, next) => {

@@ -75,10 +75,24 @@ router.put('/:id', requirePermission('teachers:edit'), upload.single('photo'), a
 
 router.patch('/:id/counselor', requireSuperadmin, async (req, res, next) => {
   try {
-    await prisma.teacher.updateMany({ data: { isCounselor: false } });
+    await prisma.teacher.updateMany({ data: { isCounselor: false, counselorColor: null } });
+    const color = req.body.color || '#ffd700';
     const updated = await prisma.teacher.update({
       where: { id: req.params.id },
-      data: { isCounselor: true },
+      data: { isCounselor: true, counselorColor: color },
+    });
+    res.json(updated);
+  } catch (err) { next(err); }
+});
+
+router.patch('/:id/counselor-color', requireSuperadmin, async (req, res, next) => {
+  try {
+    const teacher = await prisma.teacher.findUnique({ where: { id: req.params.id } });
+    if (!teacher?.isCounselor) return res.status(400).json({ error: 'Este professor n\u00e3o \u00e9 o conselheiro atual' });
+    const color = req.body.color || '#ffd700';
+    const updated = await prisma.teacher.update({
+      where: { id: req.params.id },
+      data: { counselorColor: color },
     });
     res.json(updated);
   } catch (err) { next(err); }
