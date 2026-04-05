@@ -44,6 +44,11 @@ router.post('/:id/donate', requirePermission('contributors:manage'), async (req,
 
 router.delete('/:id', requirePermission('contributors:manage'), async (req, res, next) => {
   try {
+    const donations = await prisma.donation.findMany({ where: { contributorId: req.params.id }, select: { id: true } });
+    const donationIds = donations.map(d => d.id);
+    if (donationIds.length) {
+      await prisma.ledgerEntry.deleteMany({ where: { referenceId: { in: donationIds }, referenceType: 'DONATION' } });
+    }
     await prisma.donation.deleteMany({ where: { contributorId: req.params.id } });
     await prisma.contributor.delete({ where: { id: req.params.id } });
     res.json({ message: 'Contribuidor excluído' });

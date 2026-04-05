@@ -65,7 +65,7 @@ router.get('/', requireAdmin, async (req, res, next) => {
     ]);
 
     const credits = await prisma.ledgerEntry.aggregate({ where: { type: 'CREDIT' }, _sum: { amount: true } });
-    const debits  = await prisma.ledgerEntry.aggregate({ where: { type: 'DEBIT' }, _sum: { amount: true } });
+    const debits  = await prisma.ledgerEntry.aggregate({ where: { type: { in: ['DEBIT', 'REVERSAL'] } }, _sum: { amount: true } });
 
     const topStudents = await prisma.student.findMany({
       where: { isActive: true },

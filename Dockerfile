@@ -19,9 +19,7 @@ RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Non-secret environment variables
 ENV NODE_ENV=production \
-    PORT=3001 \
-    SUPERADMIN_USERNAME=superadmin \
-    SUPERADMIN_PASSWORD=Pantera@2024!
+    PORT=3001
 
 # Install backend dependencies
 COPY backend/package*.json ./
@@ -38,7 +36,7 @@ COPY backend/src ./src/
 COPY --from=frontend-builder /frontend/dist ./frontend/dist
 
 # Create necessary directories
-RUN mkdir -p uploads/students uploads/raffles logs
+RUN mkdir -p uploads/students uploads/teachers uploads/raffles uploads/gallery logs
 
 EXPOSE 3001
 

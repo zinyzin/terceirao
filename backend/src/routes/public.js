@@ -84,6 +84,8 @@ router.get('/info', async (req, res, next) => {
 
         totalRaised: 0,
 
+        goalAmount: 0,
+
         siteName: 'Turma Pantera',
 
         siteDescription: 'Sistema de gestão do 3º Ano',

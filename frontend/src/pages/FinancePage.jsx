@@ -33,12 +33,16 @@ export default function FinancePage() {
 
   const load = async () => {
     if (!isAllowed) {
-      const [financeRes, ledgerRes] = await Promise.all([
-        axios.get('/api/public/finance'),
-        axios.get('/api/public/ledger')
-      ])
-      setPublicData(financeRes.data)
-      setLedger(ledgerRes.data)
+      try {
+        const [financeRes, ledgerRes] = await Promise.all([
+          axios.get('/api/public/finance'),
+          axios.get('/api/public/ledger')
+        ])
+        setPublicData(financeRes.data)
+        setLedger(ledgerRes.data)
+      } catch (e) {
+        toast.error('Erro ao carregar dados financeiros')
+      }
       return
     }
     

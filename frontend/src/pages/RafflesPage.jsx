@@ -42,14 +42,20 @@ export default function RafflesPage() {
 
   const createRaffle = async e => {
     e.preventDefault()
-    await api.post('/raffles', form)
-    setModal(null); setForm({title:'',description:'',drawDate:''}); load()
+    try {
+      await api.post('/raffles', form)
+      setModal(null); setForm({title:'',description:'',drawDate:''}); load()
+      toast.success('Rifa criada!')
+    } catch (e) { toast.error(e.response?.data?.error || 'Erro ao criar rifa') }
   }
 
   const addParticipant = async e => {
     e.preventDefault()
-    await api.post(`/raffles/${activeRaffle}/participants`, { ...pForm, tickets:parseInt(pForm.tickets) })
-    setModal(null); setPForm({studentId:'',tickets:1}); load()
+    try {
+      await api.post(`/raffles/${activeRaffle}/participants`, { ...pForm, tickets:parseInt(pForm.tickets) })
+      setModal(null); setPForm({studentId:'',tickets:1}); load()
+      toast.success('Participante adicionado!')
+    } catch (e) { toast.error(e.response?.data?.error || 'Erro ao adicionar participante') }
   }
 
   const draw = async id => {
