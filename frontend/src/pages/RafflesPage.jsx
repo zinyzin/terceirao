@@ -20,11 +20,13 @@ export default function RafflesPage() {
   const [form, setForm] = useState({ title:'', description:'', drawDate:'' })
   const [pForm, setPForm] = useState({ studentId:'', tickets:1 })
   const [search, setSearch] = useState('')
+  const [loading, setLoading] = useState(true)
   const { isAuth, can } = useAuthStore()
 
   const isAllowed = isAuth && can('raffles:manage')
 
   const load = async () => {
+    setLoading(true)
     try {
       if (!isAllowed) {
         const { data } = await axios.get('/api/public/raffles')
@@ -36,6 +38,8 @@ export default function RafflesPage() {
       setRaffles(r.data); setStudents(s.data)
     } catch (e) {
       toast.error(e.response?.data?.error || 'Erro ao carregar rifas')
+    } finally {
+      setLoading(false)
     }
   }
   useEffect(()=>{ load() },[isAllowed])
@@ -105,7 +109,11 @@ export default function RafflesPage() {
         </div>
       )}
 
-      {filtered.length === 0 && !loading ? (
+      {loading ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[...Array(3)].map((_,i) => <div key={i} className="skel h-40 rounded-2xl" />)}
+        </div>
+      ) : filtered.length === 0 ? (
         <div className="glass p-12 flex flex-col items-center justify-center text-center gap-3">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center" style={{background:'rgba(96,165,250,0.08)',border:'1px solid rgba(96,165,250,0.15)'}}>
             <Ticket size={24} className="text-blue-400/50"/>

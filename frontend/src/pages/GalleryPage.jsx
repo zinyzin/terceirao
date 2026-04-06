@@ -17,10 +17,17 @@ export default function GalleryPage() {
   const load = async () => {
     setLoading(true)
     try {
-      const client = isAllowed ? api : axios
-      const path = isAllowed ? '/gallery' : '/api/public/gallery'
-      const { data } = await client.get(path)
-      setItems(data)
+      if (isAllowed) {
+        const { data } = await api.get('/gallery')
+        setItems(data)
+      } else {
+        const { data } = await axios.get('/api/public/gallery')
+        setItems(data)
+      }
+    } catch (e) {
+      console.error('Gallery load error:', e)
+      toast.error(e.response?.data?.error || 'Erro ao carregar galeria')
+      setItems([])
     } finally {
       setLoading(false)
     }
