@@ -58,12 +58,14 @@ export default function App() {
           <Route path="/rifas" element={<RafflesPage/>}/>
           <Route path="/contribuidores" element={<ContributorsPage/>}/>
           <Route path="/galeria" element={<GalleryPage/>}/>
+          <Route path="/eventos" element={<EventsPage/>}/>
         </Route>
         <Route path="/students" element={<Navigate to="/alunos" replace/>}/>
         <Route path="/teachers" element={<Navigate to="/professores" replace/>}/>
         <Route path="/finance" element={<Navigate to="/financeiro" replace/>}/>
         <Route path="/raffles" element={<Navigate to="/rifas" replace/>}/>
         <Route path="/contributors" element={<Navigate to="/contribuidores" replace/>}/>
+        <Route path="/events" element={<Navigate to="/eventos" replace/>}/>
 
         <Route path="/admin" element={<Guard role="admin"><AdminLayout/></Guard>}>
           <Route index element={<Navigate to="dash" replace/>}/>

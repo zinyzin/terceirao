@@ -1,8 +1,9 @@
 // src/pages/EventsPage.jsx
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Plus, Calendar, Clock, MapPin, Edit2, Trash2, X, ChevronLeft, ChevronRight } from 'lucide-react'
+import { Plus, Calendar, Clock, MapPin, Edit2, Trash2, X } from 'lucide-react'
 import api from '../lib/api'
+import axios from 'axios'
 import Modal from '../components/Modal'
 import { useAuthStore } from '../store/auth'
 import { toast } from '../components/Toast'
@@ -28,7 +29,7 @@ const typeLabels = {
 
 export default function EventsPage() {
   const { isAuth, can } = useAuthStore()
-  const isAllowed = isAuth && can('students:manage')
+  const isAllowed = isAuth && can('events:manage')
   
   const [events, setEvents] = useState([])
   const [loading, setLoading] = useState(true)
@@ -47,9 +48,20 @@ export default function EventsPage() {
   const load = async () => {
     setLoading(true)
     try {
+      if (!isAllowed) {
+        const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
+        const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
+        const { data } = await axios.get('/api/public/events', {
+          params: {
+            startDate: startOfMonth.toISOString(),
+            endDate: endOfMonth.toISOString()
+          }
+        })
+        setEvents(data)
+        return
+      }
       const startOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1)
       const endOfMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0)
-      
       const { data } = await api.get('/events', {
         params: {
           startDate: startOfMonth.toISOString(),

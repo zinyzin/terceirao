@@ -324,7 +324,7 @@ router.get('/contributors', async (req, res, next) => {
 
       const total = c.donations.reduce((s, d) => s + parseFloat(d.amount), 0);
 
-      const name = c.name?.trim() || 'Contribuinte';
+      const name = c.name?.trim() || 'Contribuidor';
 
       const isAnonymous = /an[oô]nimo/i.test(name);
 
@@ -332,7 +332,7 @@ router.get('/contributors', async (req, res, next) => {
 
         id: c.id,
 
-        name: isAnonymous ? 'Contribuinte Anônimo' : name,
+        name: isAnonymous ? 'Contribuidor Anônimo' : name,
 
         level: getLevel(total),
 
@@ -368,7 +368,37 @@ router.get('/contributors', async (req, res, next) => {
 
 });
 
+// GET /api/public/events — public events listing (active only)
+router.get('/events', async (req, res, next) => {
+  try {
+    const { startDate, endDate } = req.query;
+    
+    const where = { isActive: true };
+    
+    if (startDate || endDate) {
+      where.startDate = {};
+      if (startDate) where.startDate.gte = new Date(startDate);
+      if (endDate) {
+        const end = new Date(endDate);
+        end.setDate(end.getDate() + 1);
+        where.startDate.lt = end;
+      }
+    }
 
+    const events = await prisma.event.findMany({
+      where,
+      select: {
+        id: true, title: true, description: true, startDate: true, endDate: true,
+        location: true, type: true, isActive: true,
+      },
+      orderBy: { startDate: 'asc' },
+    });
+    
+    res.json(events);
+  } catch (err) {
+    if (isMissingTableError(err)) { res.json([]); return; }
+    next(err);
+  }
+});
 
 module.exports = router;
-
