@@ -32,6 +32,10 @@ const app = express();
 const PORT = process.env.PORT || 3001;
 const HOST = '0.0.0.0';
 
+// Health check — must be before all middleware for Railway
+app.get('/api/health', (_, res) => res.json({ status: 'ok', ts: new Date() }));
+app.get('/health', (_, res) => res.json({ status: 'ok' }));
+
 // ── Security ──
 app.set('trust proxy', 1);
 
@@ -100,8 +104,6 @@ app.use('/api/settings', settingsRoutes);
 app.use('/api/trash', trashRoutes);
 app.use('/api/reports', reportsRoutes);
 app.use('/api/events', eventsRoutes);
-
-app.get('/api/health', (_, res) => res.json({ status: 'ok', ts: new Date() }));
 
 // ── Serve React (sempre que o dist existir) ──
 const frontendDist = path.join(__dirname, '../frontend/dist');
