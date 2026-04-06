@@ -46,6 +46,11 @@ async function main() {
   console.log('🐾 Seed complete!');
 }
 
-main()
-  .catch(e => { console.error(e); process.exit(1); })
-  .finally(() => prisma.$disconnect());
+// Support both require() and direct execution
+if (require.main === module) {
+  main()
+    .catch(e => { console.error(e); process.exit(1); })
+    .finally(() => prisma.$disconnect());
+}
+
+module.exports = main;
