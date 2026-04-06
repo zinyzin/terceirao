@@ -18,8 +18,7 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y openssl && rm -rf /var/lib/apt/lists/*
 
 # Non-secret environment variables
-ENV NODE_ENV=production \
-    PORT=3001
+ENV NODE_ENV=production
 
 # Install backend dependencies
 COPY backend/package*.json ./
@@ -38,6 +37,6 @@ COPY --from=frontend-builder /frontend/dist ./frontend/dist
 # Create necessary directories
 RUN mkdir -p uploads/students uploads/teachers uploads/raffles uploads/gallery logs
 
-EXPOSE 3001
+EXPOSE ${PORT:-3001}
 
-CMD ["sh", "-c", "npx prisma db push && node src/seed.js && node src/index.js"]
+CMD ["node", "src/start.js"]
